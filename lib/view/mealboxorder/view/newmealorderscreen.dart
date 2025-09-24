@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yumquick/view/admindashboard/view/adminhomescreen.dart';
+import 'package:yumquick/view/mealboxorder/view/cancelresonscreem.dart';
 import 'package:yumquick/view/widget/app_colors.dart';
 import 'package:yumquick/view/widget/floatingbutton.dart';
 
@@ -14,7 +15,6 @@ import '../bloc/newmealorder_event.dart';
 import '../bloc/newmealorder_state.dart';
 import '../model/ordermealmodel.dart';
 import 'cancelorder.dart';
-import 'cancelresonscreem.dart';
 import 'confirmmealdatetimescreen.dart';
 import 'confirmscreen.dart';
 import 'deliveredscreen.dart';
@@ -36,6 +36,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
   void initState() {
     super.initState();
     context.read<MealBoxOrderBloc>().add(FetchAllMealOrders());
+
     _tabController = TabController(
       length: 5,
       vsync: this,
@@ -160,6 +161,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
             ),
             backgroundColor: AppColors.primary,
           ),
+
           body: StreamBuilder<List<MealBoxOrder>>(
             stream: context.read<MealBoxOrderBloc>().ordersStream,
             builder: (context, snapshot) {
@@ -421,6 +423,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
                             ),
                           ),
                         );
+                        // context.read<MealBoxOrderBloc>().initSocket();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey[200],

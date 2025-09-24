@@ -34,7 +34,7 @@ class MealBoxOrderBloc extends Bloc<NewMealorderEvent, NewMealorderState> {
     _initSocket();
   }
 
-  Future<void> _initSocket() async {
+  void _initSocket() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
@@ -53,45 +53,13 @@ class MealBoxOrderBloc extends Bloc<NewMealorderEvent, NewMealorderState> {
       log('✅ Socket.IO connected: ${_socket.id}');
     });
 
-    _socket.onConnectError((data) => log('⚠️ Connection Error: $data'));
-    _socket.onError((data) => log('⚠️ Socket Error: $data'));
-    _socket.onReconnectAttempt((attempt) {
-      log('🔄 Reconnection Attempt: $attempt');
-    });
-
-    _socket.on('mealOrderUpdated', (data) async {
+    // Always fetch latest orders on update event
+    _socket.on('mealboxOrderUpdated', (data) async {
       log('📩 Received mealboxOrderUpdated event: $data');
       await audioPlayer.play(AssetSource('homepageicons/chimes_effect.mp3'));
-      try {
-        List<dynamic> ordersList;
-        if (data is List) {
-          ordersList = data;
-        } else if (data is Map) {
-          ordersList = [data];
-        } else {
-          log('⚠️ Unexpected data type for mealboxOrderUpdated');
-          return;
-        }
-
-        final mealOrders = ordersList
-            .map((json) => MealBoxOrder.fromJson(json))
-            .toList();
-
-        mealOrdersForHome = mealOrders;
-        _ordersController.add(mealOrders);
-
-        // if (mealOrders.length > lastOrderCount) {
-        log('🔔 New order(s) detected. Playing sound...');
-        lastOrderCount = mealOrders.length;
-        // Play a notification sound
-
-        // }
-
-        // refresh UI state
-        add(FetchAllMealOrders());
-      } catch (e, stackTrace) {
-        log('❌ Error processing mealboxOrderUpdated: $e\n$stackTrace');
-      }
+      add(
+        FetchAllMealOrders(),
+      ); // This will refresh your order list from backend
     });
 
     _socket.onDisconnect((_) {
@@ -143,12 +111,6 @@ class MealBoxOrderBloc extends Bloc<NewMealorderEvent, NewMealorderState> {
         lastOrderCount = mealOrders.length;
 
         _ordersController.add(mealOrders);
-        // if (mealOrders.length > lastOrderCount) {
-        //   log('🔔 New order(s) detected. Playing sound...');
-        //   lastOrderCount = mealOrders.length;
-        //   // Play a notification sound
-
-        // }
         emit(NewMealorderLoaded(mealOrders));
       } else {
         emit(

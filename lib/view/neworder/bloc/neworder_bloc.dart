@@ -32,7 +32,7 @@ class NeworderBloc extends Bloc<NeworderEvent, NeworderState> {
     on<DeliveredOrderEvent>(_markOrderDelivered);
     on<OrdersUpdatedFromSocket>(_onOrdersUpdatedFromSocket);
 
-    _initSocket();
+    // _initSocket();
   }
 
   Future<void> _initSocket() async {
