@@ -33,7 +33,7 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
     super.initState();
     context.read<NeworderBloc>().add(FetchAllOrders());
     tabController = TabController(
-      length: 6,
+      length: 5,
       vsync: this,
       initialIndex: widget.initialIndex,
     );
@@ -47,13 +47,8 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
 
   Future<void> _callCustomer(String phone) async {
     final Uri uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Cannot launch dialer')));
-    }
+
+    await launchUrl(uri);
   }
 
   Future<void> _showConfirmSplash() async {
@@ -91,16 +86,16 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
     return BlocListener<NeworderBloc, NeworderState>(
       listener: (context, state) async {
         if (state is NeworderLoaded && state.orders.isNotEmpty) {
-          if (context.read<NeworderBloc>().lastOrderCount <
-              state.orders.length) {
-            // await context.read<NeworderBloc>()._playNotificationSound();
-            context.read<NeworderBloc>().lastOrderCount = state.orders.length;
-            // _showNewOrderDialog(
-            //   state.orders,
-            //   context.read<NeworderBloc>().lastOrderCount,
-            //   state.orders.length,
-            // );
-          }
+          // if (context.read<NeworderBloc>().lastOrderCount <
+          //     state.orders.length) {
+          //   // await context.read<NeworderBloc>()._playNotificationSound();
+          //   context.read<NeworderBloc>().lastOrderCount = state.orders.length;
+          //   // _showNewOrderDialog(
+          //   //   state.orders,
+          //   //   context.read<NeworderBloc>().lastOrderCount,
+          //   //   state.orders.length,
+          //   // );
+          // }
         }
 
         if (state is ConfirmOrderSuccess) await _showConfirmSplash();
@@ -136,7 +131,7 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
               Tab(text: 'Pending'),
               Tab(text: 'Cancelled'),
               Tab(text: 'Preparing'),
-              Tab(text: 'Delivering'),
+              // Tab(text: 'Delivering'),
               Tab(text: 'Delivered'),
               Tab(text: 'All'),
             ],
@@ -169,9 +164,9 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
                 state.orders
                     .where((o) => o.status.toLowerCase() == 'confirmed')
                     .toList(),
-                state.orders
-                    .where((o) => o.status.toLowerCase() == 'delivering')
-                    .toList(),
+                // state.orders
+                //     .where((o) => o.status.toLowerCase() == 'delivering')
+                //     .toList(),
                 state.orders
                     .where((o) => o.status.toLowerCase() == 'delivered')
                     .toList(),

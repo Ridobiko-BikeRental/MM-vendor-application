@@ -181,7 +181,8 @@ class _DiscountUpdateScreenState extends State<DiscountUpdateScreen> {
         _discountController.clear();
         _discountEnd = null;
         _discountStart = null;
-        _loadCategoriesWithSubcategories();
+        Navigator.of(context).pop(true);
+        // _loadCategoriesWithSubcategories();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

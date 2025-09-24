@@ -159,6 +159,13 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
                 Tab(text: 'All'),
               ],
             ),
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new,
+                color: AppColors.background,
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             backgroundColor: AppColors.primary,
           ),
 
@@ -257,28 +264,28 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
                   ),
                   decoration: BoxDecoration(
                     color: isPending
-                        ? Colors.orange.withOpacity(0.1)
+                        ? AppColors.primary.withOpacity(0.1)
                         : isConfirmed
                         ? Colors.green.withOpacity(0.1)
-                        : Colors.red.withOpacity(0.09),
+                        : isCancelled
+                        ? Colors.red.withOpacity(0.09)
+                        : isDelivered
+                        ? Colors.blue.withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    isPending
-                        ? 'Pending'
-                        : isConfirmed
-                        ? 'Preparing'
-                        : isCancelled
-                        ? 'Cancelled'
-                        : isDelivered
-                        ? 'Delivered'
-                        : order.status.capitalize(),
+                    order.status.capitalize(),
                     style: TextStyle(
                       color: isPending
-                          ? Colors.orange
+                          ? AppColors.primary.withOpacity(0.1)
                           : isConfirmed
                           ? Colors.green[800]
-                          : Colors.red,
+                          : isCancelled
+                          ? Colors.red
+                          : isDelivered
+                          ? Colors.blue
+                          : Colors.grey,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yumquick/view/addproductscreen/bloc/addproduct_bloc.dart';
 import 'package:yumquick/view/addproductscreen/bloc/addproduct_event.dart';
 import 'package:yumquick/view/addproductscreen/bloc/addproduct_state.dart';
+import 'package:yumquick/view/admindashboard/model/catogrymodel.dart';
 import 'package:yumquick/view/widget/app_colors.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
-  List<Map<String, dynamic>> _categories = [];
+  List<CategoryModel> _categories = [];
   String? _selectedCategoryId;
 
   @override
@@ -45,37 +46,35 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _fetchCategories() async {
-    const String url =
-        "https://mm-food-backend.onrender.com/api/categories/all";
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("authToken");
-
-    if (token == null) {
-      throw Exception("No token found in SharedPreferences");
-    }
-
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+  Future<List<CategoryModel>> _fetchCategories() async {
+    final url = Uri.parse(
+      'https://mm-food-backend.onrender.com/api/categories/my-categories-with-subcategories',
     );
-
-    if (response.statusCode == 200) {
-      log("${response.statusCode}");
-      final responseData = json.decode(response.body);
-      final List<dynamic> data =
-          responseData['categories'] ?? responseData ?? [];
-      log("${data.length}");
-      return data
-          .map<Map<String, dynamic>>(
-            (e) => {'id': e['_id'] ?? '', 'name': e['name'] ?? ''},
-          )
-          .toList();
-    } else {
-      throw Exception(
-        "Failed to load categories: ${response.statusCode}, Body: ${response.body}",
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('authToken') ?? '';
+      log(token);
+      final response = await http.get(
+        url,
+        headers: {"Authorization": "Bearer $token"},
       );
+      log(response.statusCode.toString());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final categoriesJson = data['categories'] as List<dynamic>? ?? [];
+        return _categories = categoriesJson
+            .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      // } else {
+      //   throw Exception(
+      //     "Failed to load categories: ${response.statusCode}, Body: ${response.body}",
+      //   );
+      // }
+    } catch (e) {
+      throw Exception('Error fetching categories: $e');
     }
+    return [];
   }
 
   void _showImageSourceActionSheet(BuildContext context) {
@@ -351,8 +350,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               category,
                             ) {
                               return DropdownMenuItem<String>(
-                                value: category['id'],
-                                child: Text(category['name']),
+                                value: category.id,
+                                child: Text(category.name),
                               );
                             }).toList(),
                           ),

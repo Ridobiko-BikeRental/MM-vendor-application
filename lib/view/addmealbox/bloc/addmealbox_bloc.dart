@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' show log;
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -217,18 +218,25 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
     UpdateMealBoxEvent event,
     Emitter<MealBoxState> emit,
   ) async {
+    log("Updating mealbox with ID: ${event.mealBoxId}");
     emit(
       state.copyWith(isUploading: true, errorMessage: null, isSuccess: false),
     );
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
       if (token == null) throw Exception('No auth token found');
+
       final uri = Uri.parse(
         'https://mm-food-backend.onrender.com/api/mealbox/${event.mealBoxId}',
       );
       final request = http.MultipartRequest('PUT', uri);
+
+      // Set headers
       request.headers['Authorization'] = 'Bearer $token';
+
+      // Add fields
       request.fields['title'] = state.title;
       request.fields['description'] = state.description;
       request.fields['minQty'] = state.minQty;
@@ -238,10 +246,12 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
       request.fields['packagingDetails'] = state.packagingDetails;
       request.fields['category'] = state.selectedCategoryId ?? '';
 
+      // Add items as JSON string or empty array if none
       request.fields['items'] = state.items.isNotEmpty
           ? state.items
           : jsonEncode([]);
 
+      // Attach box image file if available
       if (state.boxImageFile != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
@@ -251,6 +261,7 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
         );
       }
 
+      // Attach actual image file if available
       if (state.actualImageFile != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
@@ -260,11 +271,20 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
         );
       }
 
+      // Debug prints
+      print('Sending PUT request to: $uri');
+      print('Fields: ${request.fields}');
+      print('Files attached: ${request.files.length}');
+
       final response = await request.send();
+
+      final respStr = await response.stream.bytesToString();
+      print('Response status: ${response.statusCode}');
+      print('Response body: $respStr');
+
       if (response.statusCode == 200) {
         emit(state.copyWith(isUploading: false, isSuccess: true));
       } else {
-        final respStr = await response.stream.bytesToString();
         emit(
           state.copyWith(
             isUploading: false,
@@ -274,7 +294,12 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
         );
       }
     } catch (e) {
-      emit(state.copyWith(isUploading: false, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          isUploading: false,
+          errorMessage: 'Update error: ${e.toString()}',
+        ),
+      );
     }
   }
 }

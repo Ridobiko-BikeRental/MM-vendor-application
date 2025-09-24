@@ -86,6 +86,14 @@ flutter:
     - assets/homepageicons/tick.gif
     - assets/homepageicons/Cancel.gif
     - assets/homepageicons/chimes_effect.mp3
+    - assets/homepageicons/1.png
+    - assets/homepageicons/2.png
+    - assets/homepageicons/3.png
+    - assets/homepageicons/4.png
+    - assets/homepageicons/5.png
+    - assets/homepageicons/6.png
+    - assets/homepageicons/7.png
+    - assets/homepageicons/8.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

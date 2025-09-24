@@ -201,7 +201,7 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Subcategory updated successfully!')),
         );
-        Navigator.pop(context);
+        Navigator.of(context).pop(true);
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -292,7 +292,7 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
                 content: Text('Subcategory updated successfully!'),
               ),
             );
-            Navigator.pop(context);
+            Navigator.of(context).pop(true);
           }
           if (state.imageFile != null) {
             setState(() {

@@ -111,6 +111,7 @@ class MealBoxOrderBloc extends Bloc<NewMealorderEvent, NewMealorderState> {
         lastOrderCount = mealOrders.length;
 
         _ordersController.add(mealOrders);
+
         emit(NewMealorderLoaded(mealOrders));
       } else {
         emit(

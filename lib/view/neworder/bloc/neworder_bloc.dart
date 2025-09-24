@@ -32,18 +32,13 @@ class NeworderBloc extends Bloc<NeworderEvent, NeworderState> {
     on<DeliveredOrderEvent>(_markOrderDelivered);
     on<OrdersUpdatedFromSocket>(_onOrdersUpdatedFromSocket);
 
-    // _initSocket();
+    _initSocket();
   }
 
   Future<void> _initSocket() async {
-    // Debug: log all socket events received
-    _socket.onAny((event, data) {
-      log('🔎 [SOCKET] Event: $event, Data: $data');
-    });
-    log("socket init called");
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
-    final vendorId = prefs.getString('vendorId') ?? '';
+    final vendorId = prefs.getString('vendorID') ?? '';
 
     _socket = IO.io(
       'https://mm-food-backend.onrender.com',
@@ -51,66 +46,36 @@ class NeworderBloc extends Bloc<NeworderEvent, NeworderState> {
           .setTransports(['websocket'])
           .setExtraHeaders({'Authorization': 'Bearer $token'})
           .enableAutoConnect()
+          .enableReconnection()
           .build(),
     );
 
     _socket.connect();
 
-    _socket.onConnect((_) async {
-      log('✅ Socket.IO connected: ${_socket.id}');
-      // Join vendor room after connection
+    _socket.onConnect((_) {
+      log('Socket connected: ${_socket.id}');
       if (vendorId.isNotEmpty) {
         _socket.emit('joinVendorRoom', vendorId);
-        log('🔗 Joined vendor room: $vendorId');
-      } else {
-        log('⚠ VendorId missing, cannot join room');
       }
     });
 
-    _socket.onConnectError((data) => log('⚠ Connection Error: $data'));
-    _socket.onError((data) => log('⚠ Socket Error: $data'));
-    _socket.onDisconnect((_) {
-      log('❌ Socket.IO disconnected');
-    });
-
-    // Listen for 'OrderUpdated' event from backend
-    void handleOrderUpdatedEvent(dynamic data, String eventName) async {
-      log('📩 Received $eventName event: $data');
+    _socket.on('ordersUpdated', (data) async {
+      // log('Received ordersUpdated: $data');
       await audioPlayer.play(AssetSource('homepageicons/chimes_effect.mp3'));
       try {
-        List<dynamic> ordersList;
-        if (data is List) {
-          ordersList = data;
-        } else if (data is Map) {
-          ordersList = [data];
-        } else {
-          log('⚠ Unexpected data type for $eventName');
-          return;
-        }
-        final orders = ordersList
+        final List ordersJson = data is List ? data : (data['orders'] ?? []);
+        final orders = ordersJson
             .map((json) => Order.fromJson(json))
             .toList()
             .cast<Order>();
-
+        log('Parsed ${orders.length} orders from socket data');
         ordersForHome = orders;
-        lastOrderCount = orders.length;
         _ordersController.add(orders);
-        // Instantly update UI by dispatching a custom event
         add(OrdersUpdatedFromSocket(orders));
       } catch (e, stack) {
-        log('❌ Error processing $eventName: $e\n$stack');
+        log('Error processing ordersUpdated: $e\n$stack');
       }
-    }
-
-    _socket.on(
-      'OrderUpdated',
-      (data) => handleOrderUpdatedEvent(data, 'OrderUpdated'),
-    );
-    // If you want to keep compatibility with old event names, you can add:
-    // _socket.on(
-    //   'orderUpdated',
-    //   (data) => handleOrderUpdatedEvent(data, 'orderUpdated'),
-    // );
+    });
   }
 
   Future<void> _onOrdersUpdatedFromSocket(
@@ -118,18 +83,13 @@ class NeworderBloc extends Bloc<NeworderEvent, NeworderState> {
     Emitter<NeworderState> emit,
   ) async {
     emit(NeworderLoaded(event.orders));
-  }
-
-  Future<void> playNotificationSound() async {
-    await audioPlayer.play(AssetSource('homepageicons/chimes_effect.mp3'));
+    _ordersController.add(event.orders);
   }
 
   @override
   Future<void> close() {
-    _pollingTimer?.cancel();
     _ordersController.close();
-    _socket.dispose(); // ✅ clean socket
-    audioPlayer.dispose();
+    _socket.dispose();
     return super.close();
   }
 
@@ -166,12 +126,6 @@ class NeworderBloc extends Bloc<NeworderEvent, NeworderState> {
         ordersForHome = orders;
         _ordersController.add(orders);
 
-        // sound only when new orders come
-        if (orders.length > lastOrderCount) {
-          await playNotificationSound();
-        }
-
-        lastOrderCount = orders.length;
         emit(NeworderLoaded(orders));
       } else if (response.statusCode == 401) {
         emit(NeworderError("Unauthorized (401) – Please log in again"));

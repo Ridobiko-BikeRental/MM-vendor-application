@@ -27,7 +27,7 @@ class Navbar extends StatelessWidget {
           // Home
           _navItem(
             context,
-            icon: Icons.home_outlined,
+            icon: "assets/homepageicons/5.png",
             label: 'Home',
             onPressed: () {
               Navigator.of(context).pushAndRemoveUntil(
@@ -39,7 +39,7 @@ class Navbar extends StatelessWidget {
           // Products List
           _navItem(
             context,
-            icon: Icons.list_alt,
+            icon: "assets/homepageicons/6.png",
             label: 'Products',
             onPressed: () {
               Navigator.of(context).pushAndRemoveUntil(
@@ -51,7 +51,7 @@ class Navbar extends StatelessWidget {
           // Meal Box
           _navItem(
             context,
-            icon: Icons.food_bank,
+            icon: "assets/homepageicons/7.png",
             label: 'Meal Box',
             onPressed: () {
               Navigator.of(context).pushAndRemoveUntil(
@@ -74,7 +74,7 @@ class Navbar extends StatelessWidget {
           // New Orders
           _navItem(
             context,
-            icon: Icons.shopping_cart_outlined,
+            icon: "assets/homepageicons/8.png",
             label: 'Orders',
             onPressed: () {
               Navigator.of(context).push(
@@ -84,7 +84,7 @@ class Navbar extends StatelessWidget {
           ),
           _navItem(
             context,
-            icon: Icons.shopping_cart_outlined,
+            icon: "assets/homepageicons/8.png",
             label: 'Meal Orders',
             onPressed: () {
               Navigator.of(context).push(
@@ -99,7 +99,7 @@ class Navbar extends StatelessWidget {
 
   Widget _navItem(
     BuildContext context, {
-    required IconData icon,
+    required String icon,
     required String label,
     required VoidCallback onPressed,
   }) {
@@ -109,7 +109,7 @@ class Navbar extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.white, size: 30),
+          Image.asset(icon, color: Colors.white, scale: 10),
           const SizedBox(height: 2),
           Text(
             label,

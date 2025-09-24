@@ -1,8 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:developer' show log;
-
 // import 'package:carousel_slider/carousel_slider.dart';
+import 'dart:developer';
+
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -69,8 +69,8 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
   // }
 
   Future<void> _refresh() async {
-    context.read<NeworderBloc>().add(FetchAllOrders());
     context.read<MealBoxOrderBloc>().add((FetchAllMealOrders()));
+    context.read<NeworderBloc>().add(FetchAllOrders());
     context.read<DashboardBloc>().add(FetchCategoriesEvent());
     context.read<UserprofileBloc>().add(LoadUserProfile());
 
@@ -78,47 +78,45 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
     // log("${userDetails.name}");
   }
 
+  OrderFilter selectedFilter = OrderFilter.today;
+
+  void onFilterChanged(OrderFilter? filter) {
+    if (filter != null && filter != selectedFilter) {
+      setState(() {
+        selectedFilter = filter;
+      });
+      // Dispatch events to reload if needed
+      context.read<NeworderBloc>().add(FetchAllOrders());
+      context.read<MealBoxOrderBloc>().add(FetchAllMealOrders());
+    }
+  }
+
+  // Filter function (already present, ensure correct)
   List<dynamic> filterOrders(List<dynamic> orderList, OrderFilter filter) {
-    DateTime now = DateTime.now();
-    DateTime today = DateTime(now.year, now.month, now.day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     switch (filter) {
       case OrderFilter.today:
-        return orderList
-            .where(
-              (o) =>
-                  o.createdAt.year == today.year &&
-                  o.createdAt.month == today.month &&
-                  o.createdAt.day == today.day,
-            )
-            .toList();
+        return orderList.where((o) {
+          final date = o.createdAt;
+          return date.year == today.year &&
+              date.month == today.month &&
+              date.day == today.day;
+        }).toList();
       case OrderFilter.yesterday:
-        DateTime yesterday = today.subtract(const Duration(days: 1));
-        return orderList
-            .where(
-              (o) =>
-                  o.createdAt.year == yesterday.year &&
-                  o.createdAt.month == yesterday.month &&
-                  o.createdAt.day == yesterday.day,
-            )
-            .toList();
+        final yesterday = today.subtract(const Duration(days: 1));
+        return orderList.where((o) {
+          final date = o.createdAt;
+          return date.year == yesterday.year &&
+              date.month == yesterday.month &&
+              date.day == yesterday.day;
+        }).toList();
       case OrderFilter.lastWeek:
-        DateTime lastWeek = today.subtract(const Duration(days: 7));
-        return orderList
-            .where(
-              (o) => o.createdAt.isAfter(
-                lastWeek.subtract(const Duration(days: 1)),
-              ),
-            )
-            .toList();
+        final lastWeek = today.subtract(const Duration(days: 7));
+        return orderList.where((o) => o.createdAt.isAfter(lastWeek)).toList();
       case OrderFilter.lastMonth:
-        DateTime lastMonth = DateTime(today.year, today.month - 1, today.day);
-        return orderList
-            .where(
-              (o) => o.createdAt.isAfter(
-                lastMonth.subtract(const Duration(days: 1)),
-              ),
-            )
-            .toList();
+        final lastMonth = DateTime(today.year, today.month - 1, today.day);
+        return orderList.where((o) => o.createdAt.isAfter(lastMonth)).toList();
       case OrderFilter.all:
       default:
         return orderList;
@@ -130,7 +128,7 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
   Widget dashboardCard(
     String title,
     String value,
-    IconData icon, {
+    String icon, {
     VoidCallback? onTap,
   }) {
     return GestureDetector(
@@ -147,7 +145,7 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
             CircleAvatar(
               radius: 22,
               backgroundColor: Colors.white,
-              child: Icon(icon, color: AppColors.primary, size: 22),
+              child: Image.asset(icon, scale: 1.6, color: AppColors.primary),
             ),
             const Spacer(),
             FittedBox(
@@ -551,7 +549,9 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
                                               dashboardCard(
                                                 "Total Orders",
                                                 "${filteredOrders.length}",
-                                                Icons.all_out,
+
+                                                "assets/homepageicons/1.png",
+
                                                 onTap: () {
                                                   Navigator.push(
                                                     context,
@@ -567,7 +567,7 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
                                               dashboardCard(
                                                 "Pending Orders",
                                                 "${pending.length}",
-                                                Icons.pending,
+                                                "assets/homepageicons/2.png",
                                                 onTap: () {
                                                   Navigator.push(
                                                     context,
@@ -583,7 +583,7 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
                                               dashboardCard(
                                                 "Cancelled Orders",
                                                 "${cancelled.length}",
-                                                Icons.cancel_outlined,
+                                                "assets/homepageicons/3.png",
                                                 onTap: () {
                                                   Navigator.push(
                                                     context,
@@ -599,7 +599,7 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
                                               dashboardCard(
                                                 "Preparing Orders",
                                                 "${preparing.length}",
-                                                Icons.kitchen,
+                                                "assets/homepageicons/4.png",
                                                 onTap: () {
                                                   Navigator.push(
                                                     context,
@@ -630,11 +630,10 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
                     Builder(
                       builder: (context) {
                         return BlocBuilder<MealBoxOrderBloc, NewMealorderState>(
-                          builder: (context, dashState) {
-                            if (dashState is NewMealorderLoading) {
+                          builder: (context, state) {
+                            if (state is NewMealorderLoading) {
                               return Padding(
                                 padding: const EdgeInsets.all(8),
-
                                 child: GridView.count(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
@@ -651,149 +650,106 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
                                   ),
                                 ),
                               );
-                            } else if (dashState is NewMealorderLoaded) {
-                              return BlocBuilder<
-                                MealBoxOrderBloc,
-                                NewMealorderState
-                              >(
-                                builder: (context, orderState) {
-                                  if (orderState is NewMealorderLoading) {
-                                    return Padding(
-                                      padding: const EdgeInsets.all(8.0),
+                            } else if (state is NewMealorderLoaded) {
+                              log("Meal Orders: ${state.mealOrders.length}");
+                              final filteredOrders = filterOrders(
+                                state.mealOrders,
+                                _selectedFilter,
+                              );
 
-                                      child: GridView.count(
-                                        shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        crossAxisCount: 2,
-                                        mainAxisSpacing: 12,
-                                        crossAxisSpacing: 12,
-                                        childAspectRatio: 1.2,
-                                        children: List.generate(
-                                          4,
-                                          (index) => const SkeletonBox(
-                                            height: 120,
-                                            width: double.infinity,
+                              final pending = filteredOrders
+                                  .where(
+                                    (o) => o.status.toLowerCase() == "pending",
+                                  )
+                                  .toList();
+                              final cancelled = filteredOrders
+                                  .where(
+                                    (o) =>
+                                        o.status.toLowerCase() == "cancelled",
+                                  )
+                                  .toList();
+                              final preparing = filteredOrders
+                                  .where(
+                                    (o) =>
+                                        o.status.toLowerCase() == "confirmed",
+                                  )
+                                  .toList();
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: GridView.count(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 12,
+                                  childAspectRatio: 1.2,
+                                  children: [
+                                    dashboardCard(
+                                      "Total MealBox Orders",
+                                      "${filteredOrders.length}",
+                                      "assets/homepageicons/1.png",
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const NewMealOrdersScreen(
+                                                  initialIndex: 4,
+                                                ),
                                           ),
-                                        ),
-                                      ),
-                                    );
-                                  } else if (orderState is NewMealorderLoaded) {
-                                    log("${orderState.mealOrders.length}");
-                                    final filteredOrders = filterOrders(
-                                      orderState.mealOrders,
-                                      _selectedFilter,
-                                    );
-
-                                    final pending = filteredOrders
-                                        .where(
-                                          (o) =>
-                                              o.status.toLowerCase() ==
-                                              "pending",
-                                        )
-                                        .toList();
-                                    final cancelled = filteredOrders
-                                        .where(
-                                          (o) =>
-                                              o.status.toLowerCase() ==
-                                              "cancelled",
-                                        )
-                                        .toList();
-                                    final preparing = filteredOrders
-                                        .where(
-                                          (o) =>
-                                              o.status.toLowerCase() ==
-                                              "confirmed",
-                                        )
-                                        .toList();
-
-                                    return Padding(
-                                      padding: EdgeInsets.all(
-                                        MediaQuery.of(context).size.height / 50,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          GridView.count(
-                                            shrinkWrap: true,
-                                            physics:
-                                                const NeverScrollableScrollPhysics(),
-                                            crossAxisCount: 2,
-                                            mainAxisSpacing: 12,
-                                            crossAxisSpacing: 12,
-                                            childAspectRatio: 1.2,
-                                            children: [
-                                              dashboardCard(
-                                                "Total MealBox Orders",
-                                                "${filteredOrders.length}",
-                                                Icons.all_out,
-                                                onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          const NewMealOrdersScreen(
-                                                            initialIndex: 4,
-                                                          ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                              dashboardCard(
-                                                "Pending MealBox Orders",
-                                                "${pending.length}",
-                                                Icons.pending,
-                                                onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          const NewMealOrdersScreen(
-                                                            initialIndex: 0,
-                                                          ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                              dashboardCard(
-                                                "Cancelled MealBox Orders",
-                                                "${cancelled.length}",
-                                                Icons.cancel_outlined,
-                                                onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          const NewMealOrdersScreen(
-                                                            initialIndex: 1,
-                                                          ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                              dashboardCard(
-                                                "Preparing MealBox Orders",
-                                                "${preparing.length}",
-                                                Icons.kitchen,
-                                                onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          const NewMealOrdersScreen(
-                                                            initialIndex: 2,
-                                                          ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ],
+                                        );
+                                      },
+                                    ),
+                                    dashboardCard(
+                                      "Pending MealBox Orders",
+                                      "${pending.length}",
+                                      "assets/homepageicons/2.png",
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const NewMealOrdersScreen(
+                                                  initialIndex: 0,
+                                                ),
                                           ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
+                                        );
+                                      },
+                                    ),
+                                    dashboardCard(
+                                      "Cancelled MealBox Orders",
+                                      "${cancelled.length}",
+                                      "assets/homepageicons/3.png",
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const NewMealOrdersScreen(
+                                                  initialIndex: 1,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    dashboardCard(
+                                      "Preparing MealBox Orders",
+                                      "${preparing.length}",
+                                      "assets/homepageicons/4.png",
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const NewMealOrdersScreen(
+                                                  initialIndex: 2,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
                               );
                             }
                             return const SizedBox.shrink();

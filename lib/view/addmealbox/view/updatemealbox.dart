@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yumquick/view/addmealbox/view/mealbox.dart' show MealBox;
 import 'package:yumquick/view/admindashboard/view/adminhomescreen.dart';
+import 'package:yumquick/view/widget/app_colors.dart';
 import 'package:yumquick/view/widget/navbar.dart';
 
 import '../bloc/addmealbox_bloc.dart';
@@ -79,8 +81,14 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
   Future _fetchItems() async {
     setState(() => isLoadingItems = true);
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('authToken');
       final response = await http.get(
         Uri.parse("https://mm-food-backend.onrender.com/api/item"),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
       );
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
@@ -269,9 +277,16 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
           "Update MealBox",
           style: TextStyle(color: Colors.white),
         ),
-        centerTitle: true,
-        backgroundColor: Colors.orangeAccent,
+        // centerTitle: true,
+        backgroundColor: AppColors.primary,
         elevation: 5,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.background,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: BlocConsumer<MealBoxBloc, MealBoxState>(
         listenWhen: (previous, current) =>
@@ -544,13 +559,11 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
                       const SizedBox(height: 30),
 
                       ElevatedButton(
-                        onPressed: state.isUploading
-                            ? null
-                            : () {
-                                context.read<MealBoxBloc>().add(
-                                  UpdateMealBoxEvent(widget.updateMealBox.id),
-                                );
-                              },
+                        onPressed: () {
+                          context.read<MealBoxBloc>().add(
+                            UpdateMealBoxEvent(widget.updateMealBox.id),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE95322),
                           minimumSize: Size(width * 0.5, 50),

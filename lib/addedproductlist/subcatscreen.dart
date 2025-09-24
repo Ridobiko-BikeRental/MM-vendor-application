@@ -37,29 +37,71 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
   @override
   void initState() {
     super.initState();
+    reloadSubCategories();
     subCategories = List.from(widget.subCategories);
   }
 
-  Future<void> reloadSubCategories() async {
+  Future<List<Map<String, dynamic>>> _fetchCategoriesWithSubcategories() async {
+    const String url =
+        "https://mm-food-backend.onrender.com/api/categories/my-categories-with-subcategories";
+
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken') ?? '';
-    final url = Uri.parse(
-      'https://mm-food-backend.onrender.com/api/categories/subcategory-list?category=${widget.categoryName}',
-    );
+    final token = prefs.getString("authToken");
+    if (token == null) throw Exception("No token found in SharedPreferences");
+
     final response = await http.get(
-      url,
+      Uri.parse(url),
       headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
     );
 
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      final List<dynamic> data = jsonResponse['subcategories'] ?? [];
+    if (response.statusCode != 200) {
+      throw Exception("Failed: ${response.statusCode}, Body: ${response.body}");
+    }
+
+    final decoded = json.decode(response.body);
+    final List<dynamic> rawCats = (decoded['categories'] as List?) ?? [];
+
+    return rawCats.map<Map<String, dynamic>>((e) {
+      final String catName = (e['name'] ?? '').toString();
+      final subs = (e['subCategories'] as List? ?? [])
+          .map<Map<String, dynamic>>((sub) {
+            return {
+              'id': (sub['_id'] ?? '').toString(),
+              'name': (sub['name'] ?? '').toString(),
+              'description': (sub['description'] ?? '').toString(),
+              'pricePerUnit': sub['pricePerUnit'] ?? 0,
+              'imageUrl': (sub['imageUrl'] ?? '').toString(),
+              'available': sub['available'] ?? false,
+              'quantity': sub['quantity'] ?? 0,
+              'category': (sub['category'] ?? '').toString(),
+              'discount': sub['discount'] ?? 0,
+            };
+          })
+          .toList();
+      return {'name': catName, 'subcategories': subs};
+    }).toList();
+  }
+
+  Future<void> reloadSubCategories() async {
+    try {
+      final allCats = await _fetchCategoriesWithSubcategories();
+
+      final selected = allCats.firstWhere(
+        (cat) =>
+            (cat['name'] as String).trim().toLowerCase() ==
+            widget.categoryName.trim().toLowerCase(),
+        orElse: () => {'subcategories': <Map<String, dynamic>>[]},
+      );
+
+      final subcats = List<Map<String, dynamic>>.from(
+        (selected['subcategories'] as List?) ?? const <Map<String, dynamic>>[],
+      );
 
       setState(() {
-        subCategories = data
+        subCategories = subcats
             .map(
               (e) => SubCategoryModel(
-                id: e['_id'] ?? '',
+                id: e['id'] ?? '',
                 name: e['name'] ?? '',
                 description: e['description'] ?? '',
                 pricePerUnit: e['pricePerUnit'] ?? 0,
@@ -72,9 +114,10 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
             )
             .toList();
       });
-    } else {
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to reload subcategories")),
+        SnackBar(content: Text("Error fetching subcategories: $e")),
       );
     }
   }
@@ -128,10 +171,17 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
+            onPressed: () async {
+              final updated = Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => DiscountUpdateScreen()),
               );
+
+              if (updated == true) {
+                await reloadSubCategories();
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   const SnackBar(content: Text('')),
+                // );
+              }
             },
             icon: Icon(Icons.discount_sharp, color: AppColors.background),
           ),
