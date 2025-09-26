@@ -62,6 +62,7 @@ class NeworderBloc extends Bloc<NeworderEvent, NeworderState> {
     _socket.on('ordersUpdated', (data) async {
       // log('Received ordersUpdated: $data');
       await audioPlayer.play(AssetSource('homepageicons/chimes_effect.mp3'));
+
       try {
         final List ordersJson = data is List ? data : (data['orders'] ?? []);
         final orders = ordersJson
@@ -71,6 +72,7 @@ class NeworderBloc extends Bloc<NeworderEvent, NeworderState> {
         log('Parsed ${orders.length} orders from socket data');
         ordersForHome = orders;
         _ordersController.add(orders);
+
         add(OrdersUpdatedFromSocket(orders));
       } catch (e, stack) {
         log('Error processing ordersUpdated: $e\n$stack');
@@ -82,8 +84,8 @@ class NeworderBloc extends Bloc<NeworderEvent, NeworderState> {
     OrdersUpdatedFromSocket event,
     Emitter<NeworderState> emit,
   ) async {
-    emit(NeworderLoaded(event.orders));
     _ordersController.add(event.orders);
+    emit(NeworderLoaded(event.orders));
   }
 
   @override
