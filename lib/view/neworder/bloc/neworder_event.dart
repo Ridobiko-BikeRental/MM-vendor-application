@@ -1,4 +1,3 @@
-
 import 'package:yumquick/view/neworder/model/ordermodel.dart';
 
 abstract class NeworderEvent {}
@@ -10,7 +9,7 @@ class ConfirmOrderEvent extends NeworderEvent {
   final String time;
   final String date;
 
-  ConfirmOrderEvent(this.orderId, this.date, this.time);
+  ConfirmOrderEvent( this.orderId, this.date, this.time);
 }
 
 class DeliveredOrderEvent extends NeworderEvent {

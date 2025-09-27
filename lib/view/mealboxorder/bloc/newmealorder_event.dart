@@ -1,3 +1,5 @@
+import 'package:yumquick/view/mealboxorder/model/ordermealmodel.dart';
+
 abstract class NewMealorderEvent {}
 
 class FetchAllMealOrders extends NewMealorderEvent {}
@@ -21,4 +23,9 @@ class CancelMealOrderEvent extends NewMealorderEvent {
   final String cancelReason;
 
   CancelMealOrderEvent(this.orderId, this.cancelReason);
+}
+
+class NewMealBoxOrderEvent extends NewMealorderEvent {
+  final MealBoxOrder order;
+  NewMealBoxOrderEvent(this.order);
 }

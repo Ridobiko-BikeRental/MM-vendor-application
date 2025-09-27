@@ -35,7 +35,8 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
   @override
   void initState() {
     super.initState();
-    context.read<MealBoxOrderBloc>().add(FetchAllMealOrders());
+    // Fetch orders initially
+    // context.read<MealBoxOrderBloc>().add(FetchAllMealOrders());
 
     _tabController = TabController(
       length: 5,
@@ -46,37 +47,28 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
 
   @override
   void dispose() {
+    // Dispose audioPlayer from bloc if needed
     context.read<MealBoxOrderBloc>().audioPlayer.dispose();
     _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _showNewOrderDialog(List<MealBoxOrder> newOrders) async {
-    await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('New Orders'),
-        content: Text('You have ${newOrders.length} new orders'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _callCustomer(String phone) async {
     final Uri uri = Uri(scheme: 'tel', path: phone);
-    await launchUrl(uri);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot launch phone dialer')),
+      );
+    }
   }
 
   Future<void> _showConfirmSplash() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => OrderconfirmScreen(),
+        builder: (_) => const OrderconfirmScreen(),
       ),
     );
     context.read<MealBoxOrderBloc>().add(FetchAllMealOrders());
@@ -86,7 +78,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
     await Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => OrderCancelledScreen(),
+        builder: (_) => const OrderCancelledScreen(),
       ),
     );
     context.read<MealBoxOrderBloc>().add(FetchAllMealOrders());
@@ -96,7 +88,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
     await Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => MealOrderDeliverdScreen(),
+        builder: (_) => const MealOrderDeliverdScreen(),
       ),
     );
     context.read<MealBoxOrderBloc>().add(FetchAllMealOrders());
@@ -106,14 +98,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
   Widget build(BuildContext context) {
     return BlocListener<MealBoxOrderBloc, NewMealorderState>(
       listener: (context, state) async {
-        if (state is NewMealorderLoaded) {
-          if (state.mealOrders.length >
-              context.read<MealBoxOrderBloc>().lastOrderCount) {
-            context.read<MealBoxOrderBloc>().lastOrderCount =
-                state.mealOrders.length;
-          }
-        }
-
+        // Respond to success states to show confirmation screens
         if (state is ConfirmMealOrderSuccess) {
           await _showConfirmSplash();
         }
@@ -123,6 +108,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
         if (state is DeliveredConfirmMealOrderSuccess) {
           await _showDeliveredSplash();
         }
+        // Show errors as snackbars
         if (state is ConfirmMealOrderError || state is CancelMealOrderError) {
           final error = state is ConfirmMealOrderError
               ? state.error
@@ -135,7 +121,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
       child: WillPopScope(
         onWillPop: () async {
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => AdminHomescreen()),
+            MaterialPageRoute(builder: (context) => const AdminHomescreen()),
             (route) => false,
           );
           return false;
@@ -145,7 +131,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
           backgroundColor: AppColors.background,
           appBar: AppBar(
             title: const Text(
-              'Orders',
+              'Meal Orders',
               style: TextStyle(color: AppColors.background),
             ),
             bottom: TabBar(
@@ -168,47 +154,56 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
             ),
             backgroundColor: AppColors.primary,
           ),
-
-          body: StreamBuilder<List<MealBoxOrder>>(
-            stream: context.read<MealBoxOrderBloc>().ordersStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+          body: BlocBuilder<MealBoxOrderBloc, NewMealorderState>(
+            builder: (context, state) {
+              if (state is NewMealorderLoading ||
+                  state is ConfirmMealOrderLoading ||
+                  state is CancelMealOrderLoading ||
+                  state is DeliveredMealOrderLoading) {
                 return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No Orders Found'));
               }
 
-              final orders = snapshot.data!;
-              final List<List<MealBoxOrder>> tabOrders = [
-                orders
-                    .where((o) => o.status.toLowerCase() == 'pending')
-                    .toList(),
-                orders
-                    .where((o) => o.status.toLowerCase() == 'cancelled')
-                    .toList(),
-                orders
-                    .where((o) => o.status.toLowerCase() == 'confirmed')
-                    .toList(),
-                orders
-                    .where((o) => o.status.toLowerCase() == 'delivered')
-                    .toList(),
-                orders,
-              ];
+              if (state is NewMealorderLoaded) {
+                final ordersList = state.mealOrders;
+                if (ordersList.isNotEmpty) {
+                  final List<List<MealBoxOrder>> tabOrders = [
+                    ordersList
+                        .where((o) => o.status.toLowerCase() == 'pending')
+                        .toList(),
+                    ordersList
+                        .where((o) => o.status.toLowerCase() == 'cancelled')
+                        .toList(),
+                    ordersList
+                        .where((o) => o.status.toLowerCase() == 'confirmed')
+                        .toList(),
+                    ordersList
+                        .where((o) => o.status.toLowerCase() == 'delivered')
+                        .toList(),
+                    ordersList,
+                  ];
 
-              return TabBarView(
-                controller: _tabController,
-                children: tabOrders.map((orders) {
-                  if (orders.isEmpty) {
-                    return const Center(child: Text('No Orders Found'));
-                  }
-                  return ListView.builder(
-                    itemCount: orders.length,
-                    itemBuilder: (_, i) => _buildOrderCard(orders[i]),
+                  return TabBarView(
+                    controller: _tabController,
+                    children: tabOrders.map((orders) {
+                      if (orders.isEmpty) {
+                        return const Center(child: Text('No Orders Found'));
+                      }
+                      return ListView.builder(
+                        itemCount: orders.length,
+                        itemBuilder: (_, i) => _buildOrderCard(orders[i]),
+                      );
+                    }).toList(),
                   );
-                }).toList(),
-              );
+                } else {
+                  return const Center(child: Text('No Orders Found'));
+                }
+              }
+
+              if (state is NewMealorderError) {
+                return Center(child: Text(state.error));
+              }
+
+              return const SizedBox.shrink();
             },
           ),
           bottomNavigationBar: const Navbar(),
@@ -278,7 +273,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
                     order.status.capitalize(),
                     style: TextStyle(
                       color: isPending
-                          ? AppColors.primary.withOpacity(0.1)
+                          ? AppColors.primary
                           : isConfirmed
                           ? Colors.green[800]
                           : isCancelled
@@ -430,7 +425,6 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
                             ),
                           ),
                         );
-                        // context.read<MealBoxOrderBloc>().initSocket();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey[200],

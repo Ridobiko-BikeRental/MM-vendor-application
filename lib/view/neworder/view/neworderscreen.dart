@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yumquick/view/mealboxorder/view/cancelorder.dart';
 import 'package:yumquick/view/mealboxorder/view/confirmscreen.dart';
@@ -332,7 +333,7 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  formatTime(order.createdAt),
+                  "${DateFormat('hh:mm').format(order.createdAt.toUtc().add(const Duration(hours: 5, minutes: 30)))}",
                   style: TextStyle(
                     color: textColor.withOpacity(0.92),
                     fontSize: 13.2,
@@ -463,16 +464,16 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
     );
   }
 
-  String formatTime(DateTime dt) {
-    final hour = dt.hour > 12
-        ? dt.hour - 12
-        : dt.hour == 0
-        ? 12
-        : dt.hour;
-    final period = dt.hour >= 12 ? 'PM' : 'AM';
-    final minute = dt.minute.toString().padLeft(2, '0');
-    return '$hour:$minute $period';
-  }
+  // String formatTime(DateTime dt) {
+  //   final hour = dt.hour > 12
+  //       ? dt.hour - 12
+  //       : dt.hour == 0
+  //       ? 12
+  //       : dt.hour;
+  //   final period = dt.hour >= 12 ? 'PM' : 'AM';
+  //   final minute = dt.minute.toString().padLeft(2, '0');
+  //   return '$hour:$minute $period';
+  // }
 }
 
 extension StringCap on String {

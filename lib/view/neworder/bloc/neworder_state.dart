@@ -20,17 +20,17 @@ class NeworderError extends NeworderState {
 
 class ConfirmOrderLoading extends NeworderState {}
 
-class DeliveredOrderLoading extends NeworderState {}
 
 class ConfirmOrderSuccess extends NeworderState {}
-
-class DeliveredOrderSuccess extends NeworderState {}
 
 class ConfirmOrderError extends NeworderState {
   final String error;
 
   ConfirmOrderError(this.error);
 }
+class DeliveredOrderLoading extends NeworderState {}
+class DeliveredOrderSuccess extends NeworderState {}
+
 
 class DeliveredOrderError extends NeworderState {
   final String error;

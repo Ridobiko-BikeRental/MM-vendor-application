@@ -30,11 +30,12 @@ class MealBoxOrderBloc extends Bloc<NewMealorderEvent, NewMealorderState> {
     on<ConfirmMealOrderEvent>(_onConfirmMealOrder);
     on<CancelMealOrderEvent>(_onCancelMealOrder);
     on<DeliveredMealOrderEvent>(_onDeliveredMealOrder);
+    on<NewMealBoxOrderEvent>(_onNewMealBoxOrderEvent);
 
     _initSocket();
   }
 
-  void _initSocket() async {
+  Future<void> _initSocket() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken') ?? '';
 
@@ -57,9 +58,19 @@ class MealBoxOrderBloc extends Bloc<NewMealorderEvent, NewMealorderState> {
     _socket.on('mealboxOrderUpdated', (data) async {
       log('📩 Received mealboxOrderUpdated event: $data');
       await audioPlayer.play(AssetSource('homepageicons/chimes_effect.mp3'));
-      add(
-        FetchAllMealOrders(),
-      ); // This will refresh your order list from backend
+
+      final orderData = data;
+
+      // Ensure mealBox is always a Map
+      if (orderData['mealBox'] is String) {
+        orderData['mealBox'] = {'_id': orderData['mealBox']};
+      }
+
+      final order = MealBoxOrder.fromJson(orderData);
+
+      add(NewMealBoxOrderEvent(order));
+
+      /// This will refresh your order list from backend
     });
 
     _socket.onDisconnect((_) {
@@ -108,7 +119,7 @@ class MealBoxOrderBloc extends Bloc<NewMealorderEvent, NewMealorderState> {
             .toList();
 
         mealOrdersForHome = mealOrders;
-        lastOrderCount = mealOrders.length;
+        // lastOrderCount = mealOrders.length;
 
         _ordersController.add(mealOrders);
 
@@ -251,5 +262,15 @@ class MealBoxOrderBloc extends Bloc<NewMealorderEvent, NewMealorderState> {
     _socket.disconnect();
     _socket.destroy();
     return super.close();
+  }
+
+  FutureOr<void> _onNewMealBoxOrderEvent(
+    NewMealBoxOrderEvent event,
+    Emitter<NewMealorderState> emit,
+  ) {
+    final updatedOrders = [event.order, ...mealOrdersForHome];
+    mealOrdersForHome = updatedOrders;
+    _ordersController.add(updatedOrders);
+    emit(NewMealorderLoaded(updatedOrders));
   }
 }

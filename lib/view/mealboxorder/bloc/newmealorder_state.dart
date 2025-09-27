@@ -47,3 +47,9 @@ class CancelMealOrderError extends NewMealorderState {
 
   CancelMealOrderError(this.error);
 }
+
+
+class NewMealBoxOrderReceived extends NewMealorderState {
+  final MealBoxOrder mealOrders;
+  NewMealBoxOrderReceived(this.mealOrders);
+}

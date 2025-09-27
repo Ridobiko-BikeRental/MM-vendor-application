@@ -18,7 +18,7 @@ class NeworderBloc extends Bloc<NeworderEvent, NeworderState> {
   final StreamController<List<Order>> _ordersController =
       StreamController.broadcast();
 
-  Timer? _pollingTimer;
+  // Timer? _pollingTimer;
   final AudioPlayer audioPlayer = AudioPlayer();
   int lastOrderCount = 0;
   late IO.Socket _socket;
