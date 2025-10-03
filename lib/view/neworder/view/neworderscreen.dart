@@ -34,7 +34,7 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
     super.initState();
     context.read<NeworderBloc>().add(FetchAllOrders());
     tabController = TabController(
-      length: 5,
+      length: 4,
       vsync: this,
       initialIndex: widget.initialIndex,
     );
@@ -130,11 +130,11 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
             labelColor: AppColors.background,
             tabs: const [
               Tab(text: 'Pending'),
-              Tab(text: 'Cancelled'),
               Tab(text: 'Preparing'),
               // Tab(text: 'Delivering'),
-              Tab(text: 'Delivered'),
+              // Tab(text: 'Delivered'),
               Tab(text: 'All'),
+              Tab(text: 'Cancelled'),
             ],
           ),
           leading: IconButton(
@@ -159,19 +159,20 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
                 state.orders
                     .where((o) => o.status.toLowerCase() == 'pending')
                     .toList(),
-                state.orders
-                    .where((o) => o.status.toLowerCase() == 'cancelled')
-                    .toList(),
+
                 state.orders
                     .where((o) => o.status.toLowerCase() == 'confirmed')
                     .toList(),
                 // state.orders
                 //     .where((o) => o.status.toLowerCase() == 'delivering')
                 //     .toList(),
-                state.orders
-                    .where((o) => o.status.toLowerCase() == 'delivered')
-                    .toList(),
+                // state.orders
+                //     .where((o) => o.status.toLowerCase() == 'delivered')
+                //     .toList(),
                 state.orders,
+                state.orders
+                    .where((o) => o.status.toLowerCase() == 'cancelled')
+                    .toList(),
               ];
 
               return TabBarView(
@@ -274,6 +275,7 @@ class _NewOrdersScreenState extends State<NewOrdersScreen>
                         : isDelivered
                         ? Colors.blue.withOpacity(0.1)
                         : Colors.grey.withOpacity(0.1),
+
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

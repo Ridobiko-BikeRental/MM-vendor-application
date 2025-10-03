@@ -5,10 +5,12 @@ class MealBoxOrder {
   final String customerName;
   final String customerEmail;
   final String customerMobile;
+  final bool isSampleOrder;
   final int quantity;
   final double price;
   final String packagingDetails;
-  final String prepareOrderDays;
+  final String minPrepareOrderDays;
+  final String maxPrepareOrderDays;
   final List<String> items;
   final String boxImage;
   final String actualImage;
@@ -23,10 +25,12 @@ class MealBoxOrder {
     required this.customerName,
     required this.customerEmail,
     required this.customerMobile,
+    required this.isSampleOrder,
     required this.quantity,
     required this.price,
     required this.packagingDetails,
-    required this.prepareOrderDays,
+    required this.minPrepareOrderDays,
+    required this.maxPrepareOrderDays,
     required this.items,
     required this.boxImage,
     required this.actualImage,
@@ -43,12 +47,15 @@ class MealBoxOrder {
       title: mealBox['title'] ?? '', // from nested mealBox
       description: mealBox['description'] ?? '',
       customerName: json['vendor']?['name'] ?? '',
+      isSampleOrder: json['isSampleOrder'] ?? false,
+
       customerEmail: json['vendor']?['email'] ?? '',
       customerMobile: json['vendor']?['mobile'] ?? '',
       quantity: json['quantity'] ?? 0,
       price: (mealBox['price'] ?? 0).toDouble(),
       packagingDetails: mealBox['packagingDetails'] ?? '',
-      prepareOrderDays: mealBox['prepareOrderDays'] ?? '',
+      minPrepareOrderDays: mealBox['minPrepareOrderDays'] ?? '',
+      maxPrepareOrderDays: mealBox['maxPrepareOrderDays'] ?? '',
       items:
           (mealBox['items'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -71,10 +78,12 @@ class MealBoxOrder {
     'customerName': customerName,
     'customerEmail': customerEmail,
     'customerMobile': customerMobile,
+    'isSampleOrder': isSampleOrder,
     'quantity': quantity,
     'price': price,
     'packagingDetails': packagingDetails,
-    'prepareOrderDays': prepareOrderDays,
+    'minPrepareOrderDays': minPrepareOrderDays,
+    'maxPrepareOrderDays': maxPrepareOrderDays,
     'items': items,
     'boxImage': boxImage,
     'actualImage': actualImage,

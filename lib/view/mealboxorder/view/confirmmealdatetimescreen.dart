@@ -33,7 +33,7 @@ class _ConfirmMealDateTimeState extends State<ConfirmMealDateTime> {
   }
 
   Future<void> _pickDate() async {
-    String input = widget.order.prepareOrderDays;
+    String input = widget.order.minPrepareOrderDays;
     log("input $input");
     // Extract the first number from the string
     final match = RegExp(r'\d+').firstMatch(input);

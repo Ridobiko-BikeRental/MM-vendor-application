@@ -26,6 +26,26 @@ class PriceChanged extends ProductEvent {
   final String price;
   PriceChanged(this.price);
 }
+class DeliveryPriceEnabledChanged extends ProductEvent {
+  final bool deliveryPriceEnabled;
+  DeliveryPriceEnabledChanged(this.deliveryPriceEnabled);
+}
+class DeliveryPriceChanged extends ProductEvent {
+  final String deliveryPrice;
+  DeliveryPriceChanged(this.deliveryPrice);
+}
+class PriceTypeChanged extends ProductEvent {
+  final String type;
+  PriceTypeChanged(this.type);
+}
+class MaxDeliveryDaysChanged extends ProductEvent {
+  final String maxDeliveryDays;
+  MaxDeliveryDaysChanged(this.maxDeliveryDays);
+}
+class MinDeliveryDaysChanged extends ProductEvent {
+  final String minDeliveryDays;
+  MinDeliveryDaysChanged(this.minDeliveryDays);
+}
 
 class UploadProductEvent extends ProductEvent {
   final String categoryId;

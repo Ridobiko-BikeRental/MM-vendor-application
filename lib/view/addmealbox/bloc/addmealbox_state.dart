@@ -9,7 +9,8 @@ class MealBoxState extends Equatable {
   final String description;
   final String minQty;
   final String price;
-  final String prepareOrderDays;
+  final String minPrepareOrderDays;
+  final String maxPrepareOrderDays;
   final bool sampleAvailable;
   final String items; // JSON string of selected items
   final String packagingDetails;
@@ -28,7 +29,8 @@ class MealBoxState extends Equatable {
     this.description = '',
     this.minQty = '',
     this.price = '',
-    this.prepareOrderDays = '',
+    this.minPrepareOrderDays = '',
+    this.maxPrepareOrderDays = '',
     this.sampleAvailable = false,
     this.items = '',
     this.packagingDetails = '',
@@ -48,7 +50,8 @@ class MealBoxState extends Equatable {
     String? description,
     String? minQty,
     String? price,
-    String? prepareOrderDays,
+    String? minPrepareOrderDays,
+    String? maxPrepareOrderDays,
     bool? sampleAvailable,
     String? items,
     String? packagingDetails,
@@ -67,7 +70,8 @@ class MealBoxState extends Equatable {
       description: description ?? this.description,
       minQty: minQty ?? this.minQty,
       price: price ?? this.price,
-      prepareOrderDays: prepareOrderDays ?? this.prepareOrderDays,
+      minPrepareOrderDays: minPrepareOrderDays ?? this.minPrepareOrderDays,
+      maxPrepareOrderDays: maxPrepareOrderDays ?? this.maxPrepareOrderDays,
       sampleAvailable: sampleAvailable ?? this.sampleAvailable,
       items: items ?? this.items,
       packagingDetails: packagingDetails ?? this.packagingDetails,
@@ -89,7 +93,8 @@ class MealBoxState extends Equatable {
     description,
     minQty,
     price,
-    prepareOrderDays,
+    minPrepareOrderDays,
+    maxPrepareOrderDays,
     sampleAvailable,
     items,
     packagingDetails,

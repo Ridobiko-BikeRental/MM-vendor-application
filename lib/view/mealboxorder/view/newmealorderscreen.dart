@@ -39,7 +39,7 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
     // context.read<MealBoxOrderBloc>().add(FetchAllMealOrders());
 
     _tabController = TabController(
-      length: 5,
+      length: 4,
       vsync: this,
       initialIndex: widget.initialIndex,
     );
@@ -139,10 +139,10 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
               controller: _tabController,
               tabs: const [
                 Tab(text: 'Pending'),
-                Tab(text: 'Cancelled'),
                 Tab(text: 'Preparing'),
-                Tab(text: 'Delivered'),
+                // Tab(text: 'Delivered'),
                 Tab(text: 'All'),
+                Tab(text: 'Cancelled'),
               ],
             ),
             leading: IconButton(
@@ -171,15 +171,15 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
                         .where((o) => o.status.toLowerCase() == 'pending')
                         .toList(),
                     ordersList
-                        .where((o) => o.status.toLowerCase() == 'cancelled')
-                        .toList(),
-                    ordersList
                         .where((o) => o.status.toLowerCase() == 'confirmed')
                         .toList(),
-                    ordersList
-                        .where((o) => o.status.toLowerCase() == 'delivered')
-                        .toList(),
+                    // ordersList
+                    //     .where((o) => o.status.toLowerCase() == 'delivered')
+                    //     .toList(),
                     ordersList,
+                    ordersList
+                        .where((o) => o.status.toLowerCase() == 'cancelled')
+                        .toList(),
                   ];
 
                   return TabBarView(
@@ -300,6 +300,26 @@ class _NewMealOrdersScreenState extends State<NewMealOrdersScreen>
               "Quantity: ${order.quantity}",
               style: TextStyle(color: Colors.grey[500], fontSize: 12.5),
             ),
+            const SizedBox(height: 6),
+            order.isSampleOrder
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      "Sample Order",
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                : SizedBox.shrink(),
             const SizedBox(height: 6),
             Divider(thickness: 1.1, color: Colors.grey[200]),
             const SizedBox(height: 6),

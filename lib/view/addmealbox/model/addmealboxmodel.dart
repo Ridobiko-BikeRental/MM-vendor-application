@@ -4,7 +4,8 @@ class MealBox {
   final String description;
   final int minQty;
   final double price;
-  final String prepareOrderDays;
+  final String minPrepareOrderDays;
+  final String maxPrepareOrderDays;
   final bool sampleAvailable;
   final List<Map<String, dynamic>> items;
   final List<String> subCategories;
@@ -19,7 +20,8 @@ class MealBox {
     required this.description,
     required this.minQty,
     required this.price,
-    required this.prepareOrderDays,
+    required this.minPrepareOrderDays,
+    required this.maxPrepareOrderDays,
     required this.sampleAvailable,
     required this.subCategories,
     required this.items,
@@ -36,7 +38,8 @@ class MealBox {
       description: json['description'],
       minQty: json['minQty'],
       price: (json['price'] as num).toDouble(),
-      prepareOrderDays: json['prepareOrderDays'],
+      minPrepareOrderDays: json['minPrepareOrderDays'],
+      maxPrepareOrderDays: json['maxPrepareOrderDays'],
       sampleAvailable: json['sampleAvailable'],
       items: (json['items'] as List)
           .map((e) => Map<String, dynamic>.from(e))

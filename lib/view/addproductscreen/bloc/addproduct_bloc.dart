@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
@@ -21,8 +22,13 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
             name: "",
             shortDescription: "",
             pricePerUnit: "",
+            priceType: "",
+            minDeliveryDays: '',
+            deliveryPriceEnabled: false,
+            deliveryPrice: '',
+            maxDeliveryDays: '',
             category: "null",
-            quantity: "",
+            minQty: "",
             imageUrl: '',
           ),
         ),
@@ -30,8 +36,13 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<PickImageEvent>(_onPickImage);
     on<NameChanged>(_onNameChanged);
     on<DescriptionChanged>(_onDescriptionChanged);
-    on<QuantityChanged>(_onQuantityChanged);
+    on<QuantityChanged>(_onminQtyChanged);
     on<PriceChanged>(_onPriceChanged);
+    on<PriceTypeChanged>(_onPriceTypeChanged);
+    on<MaxDeliveryDaysChanged>(_onMaxDeliveryDaysChanged);
+    on<MinDeliveryDaysChanged>(_onMinDeliveryDaysChanged);
+    on<DeliveryPriceChanged>(_onDeliveryPriceChanged);
+    on<DeliveryPriceEnabledChanged>(_onDeliberyPriceEnabledChanged);
     on<UploadProductEvent>(_onUploadProduct);
     on<ResetProductEvent>((event, emit) {
       emit(
@@ -40,8 +51,13 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
             name: "",
             shortDescription: "",
             pricePerUnit: "",
+            priceType: "",
+            deliveryPrice: "",
+            deliveryPriceEnabled: false,
+            minDeliveryDays: '',
+            maxDeliveryDays: '',
             category: "null",
-            quantity: "",
+            minQty: "",
             imageUrl: '',
           ),
           imageFile: null,
@@ -93,13 +109,13 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     );
   }
 
-  Future<void> _onQuantityChanged(
+  Future<void> _onminQtyChanged(
     QuantityChanged event,
     Emitter<ProductState> emit,
   ) async {
     emit(
       state.copyWith(
-        product: state.product.copyWith(quantity: event.quantity),
+        product: state.product.copyWith(minQty: event.quantity),
         errorMessage: null,
       ),
     );
@@ -124,8 +140,11 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     final product = state.product;
 
     if (product.name.isEmpty ||
-        product.quantity.isEmpty ||
+        product.minQty.isEmpty ||
         product.shortDescription.isEmpty ||
+        product.priceType.isEmpty ||
+        product.maxDeliveryDays == 0 ||
+        product.minDeliveryDays == 0 ||
         product.pricePerUnit.isEmpty) {
       emit(state.copyWith(errorMessage: "Please fill all fields"));
       return;
@@ -159,14 +178,21 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         request.headers['Authorization'] = 'Bearer $token';
       }
       // Note: MultipartRequest sets multipart/form-data content-type automatically
-
+      log("Uploading product: ${product.maxDeliveryDays}");
+      log("Uploading product: ${product.minDeliveryDays}");
+      log("Uploading product: ${product.priceType}");
       // Convert all values from dynamic to String explicitly
       final Map<String, String> fields = <String, String>{
         'name': product.name,
         'description': product.shortDescription,
         'pricePerUnit': product.pricePerUnit,
         'categoryId': event.categoryId,
-        'quantity': product.quantity,
+        'minQty': product.minQty,
+        'deliveryPriceEnabled': product.deliveryPriceEnabled.toString(),
+        'deliveryPrice': product.deliveryPrice,
+        "priceType": product.priceType,
+        "minDeliveryDays": product.minDeliveryDays.toString(),
+        "maxDeliveryDays": product.maxDeliveryDays.toString(),
       };
 
       // Add fields
@@ -180,6 +206,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       var response = await request.send();
       var respStr = await response.stream.bytesToString();
 
+      log("Response Status: ${response.statusCode}");
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(respStr);
         emit(
@@ -191,9 +219,14 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
               name: '',
               shortDescription: '',
               pricePerUnit: '',
+              deliveryPrice: '',
+              deliveryPriceEnabled: false,
               category: '',
-              quantity: '',
+              minQty: '',
               imageUrl: '',
+              priceType: "",
+              minDeliveryDays: '',
+              maxDeliveryDays: '',
             ),
           ),
         );
@@ -213,5 +246,75 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         ),
       );
     }
+  }
+
+  FutureOr<void> _onPriceTypeChanged(
+    PriceTypeChanged event,
+    Emitter<ProductState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        product: state.product.copyWith(
+          priceType: event.type,
+        ), // correct field updated
+        errorMessage: null,
+      ),
+    );
+  }
+
+  FutureOr<void> _onMaxDeliveryDaysChanged(
+    MaxDeliveryDaysChanged event,
+    Emitter<ProductState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        product: state.product.copyWith(
+          maxDeliveryDays: event.maxDeliveryDays,
+        ), // correct field
+        errorMessage: null,
+      ),
+    );
+  }
+
+  FutureOr<void> _onMinDeliveryDaysChanged(
+    MinDeliveryDaysChanged event,
+    Emitter<ProductState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        product: state.product.copyWith(
+          minDeliveryDays: event.minDeliveryDays,
+        ), // correct field
+        errorMessage: null,
+      ),
+    );
+  }
+
+  FutureOr<void> _onDeliveryPriceChanged(
+    DeliveryPriceChanged event,
+    Emitter<ProductState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        product: state.product.copyWith(
+          deliveryPrice: event.deliveryPrice,
+        ), // correct field
+        errorMessage: null,
+      ),
+    );
+  }
+
+  FutureOr<void> _onDeliberyPriceEnabledChanged(
+    DeliveryPriceEnabledChanged event,
+    Emitter<ProductState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        product: state.product.copyWith(
+          deliveryPriceEnabled: event.deliveryPriceEnabled,
+        ), // correct field
+        errorMessage: null,
+      ),
+    );
   }
 }

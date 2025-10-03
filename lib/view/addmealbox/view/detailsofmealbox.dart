@@ -227,7 +227,7 @@ class MealBoxDetailScreen extends StatelessWidget {
                   },
                   {
                     "label": "Req Day To prepare",
-                    "value": mealBox.prepareOrderDays,
+                    "value": mealBox.minPrepareOrderDays.toString(),
                     "icon": Icons.calendar_today,
                   },
                 ];

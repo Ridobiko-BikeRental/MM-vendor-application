@@ -103,10 +103,13 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
               (e) => SubCategoryModel(
                 id: e['id'] ?? '',
                 name: e['name'] ?? '',
+                priceType: e['priceType'] ?? '',
                 description: e['description'] ?? '',
                 pricePerUnit: e['pricePerUnit'] ?? 0,
+                deliveryPrice: e['deliveryPrice'] ?? 0,
                 imageUrl: e['imageUrl'] ?? '',
                 available: e['available'] ?? false,
+                deliveryPriceEnabled: e['deliveryPriceEnabled'] ?? false,
                 qunatity: e['quantity'] ?? 0,
                 catId: e['category'] ?? '',
                 discount: e['discount'] ?? 0,
@@ -334,11 +337,14 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                                       subCategories[index] = SubCategoryModel(
                                         discount: sc.discount,
                                         id: sc.id,
+                                        priceType: sc.priceType,
                                         name: sc.name,
                                         description: sc.description,
                                         pricePerUnit: sc.pricePerUnit,
+                                        deliveryPrice: sc.deliveryPrice,
                                         imageUrl: sc.imageUrl,
                                         available: newValue,
+                                        deliveryPriceEnabled: sc.deliveryPriceEnabled,
                                         qunatity: sc.qunatity,
                                         catId: sc.catId,
                                       );

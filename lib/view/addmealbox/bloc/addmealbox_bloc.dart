@@ -11,14 +11,15 @@ import 'package:yumquick/view/addmealbox/bloc/addmealbox_event.dart';
 import 'package:yumquick/view/addmealbox/bloc/addmealbox_state.dart';
 
 class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
-  MealBoxBloc() : super(const MealBoxState()) {
+  MealBoxBloc() : super(MealBoxState()) {
     on<ResetMealBoxEvent>(_onReset);
     // on<LoadCategoriesEvent>(_onLoadCategories);
     on<TitleChanged>(_onTitleChanged);
     on<DescriptionChanged>(_onDescriptionChanged);
     on<MinQtyChanged>(_onMinQtyChanged);
     on<PriceChanged>(_onPriceChanged);
-    on<DeliveryDateChanged>(_onDeliveryDateChanged);
+    on<MinmumDayToPrepare>(_onMinmumDayToPrepareChanged);
+    on<MaximumDayToPrepare>(_onMaxmumDayToPrepareChanged);
     on<SampleAvailableChanged>(_onSampleAvailableChanged);
     on<ItemsChanged>(_onItemsChanged);
     on<PackagingDetailsChanged>(_onPackagingDetailsChanged);
@@ -40,7 +41,7 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
     ResetMealBoxEvent event,
     Emitter<MealBoxState> emit,
   ) async {
-    emit(const MealBoxState());
+    emit(MealBoxState());
   }
 
   void _onTitleChanged(TitleChanged event, Emitter<MealBoxState> emit) {
@@ -62,17 +63,17 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
     emit(state.copyWith(price: event.price, errorMessage: null));
   }
 
-  void _onDeliveryDateChanged(
-    DeliveryDateChanged event,
-    Emitter<MealBoxState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        prepareOrderDays: event.prepareOrderDays.toString(),
-        errorMessage: null,
-      ),
-    );
-  }
+  // void _onDeliveryDateChanged(
+  //   DeliveryDateChanged event,
+  //   Emitter<MealBoxState> emit,
+  // ) {
+  //   emit(
+  //     state.copyWith(
+  //       prepareOrderDays: event.prepareOrderDays.toString(),
+  //       errorMessage: null,
+  //     ),
+  //   );
+  // }
 
   void _onSampleAvailableChanged(
     SampleAvailableChanged event,
@@ -155,6 +156,16 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
     emit(
       state.copyWith(isUploading: true, errorMessage: null, isSuccess: false),
     );
+    log(state.title);
+    log(state.description);
+    log(state.minQty);
+    log(state.price);
+    log(state.minPrepareOrderDays.toString());
+    log(state.maxPrepareOrderDays.toString());
+    log(state.sampleAvailable.toString());
+    log(state.packagingDetails);
+    // log(state.boxImageUrl!);
+    // log(state.actualImageUrl!);
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
@@ -168,7 +179,10 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
       request.fields['description'] = state.description;
       request.fields['minQty'] = state.minQty;
       request.fields['price'] = state.price;
-      request.fields['prepareOrderDays'] = state.prepareOrderDays;
+      request.fields['minPrepareOrderDays'] = state.minPrepareOrderDays
+          .toString();
+      request.fields['maxPrepareOrderDays'] = state.maxPrepareOrderDays
+          .toString();
       request.fields['sampleAvailable'] = state.sampleAvailable.toString();
       request.fields['packagingDetails'] = state.packagingDetails;
       request.fields['category'] = state.selectedCategoryId ?? '';
@@ -201,6 +215,7 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
         emit(state.copyWith(isUploading: false, isSuccess: true));
       } else {
         final respStr = await response.stream.bytesToString();
+        log(respStr);
         emit(
           state.copyWith(
             isUploading: false,
@@ -241,7 +256,10 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
       request.fields['description'] = state.description;
       request.fields['minQty'] = state.minQty;
       request.fields['price'] = state.price;
-      request.fields['prepareOrderDays'] = state.prepareOrderDays;
+      request.fields['minPrepareOrderDays'] = state.minPrepareOrderDays
+          .toString();
+      request.fields['maxPrepareOrderDays'] = state.maxPrepareOrderDays
+          .toString();
       request.fields['sampleAvailable'] = state.sampleAvailable.toString();
       request.fields['packagingDetails'] = state.packagingDetails;
       request.fields['category'] = state.selectedCategoryId ?? '';
@@ -301,5 +319,29 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
         ),
       );
     }
+  }
+
+  void _onMinmumDayToPrepareChanged(
+    MinmumDayToPrepare event,
+    Emitter<MealBoxState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        minPrepareOrderDays: event.minPrepareOrderDays.toString(),
+        errorMessage: null,
+      ),
+    );
+  }
+
+  void _onMaxmumDayToPrepareChanged(
+    MaximumDayToPrepare event,
+    Emitter<MealBoxState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        maxPrepareOrderDays: event.maxPrepareOrderDays.toString(),
+        errorMessage: null,
+      ),
+    );
   }
 }

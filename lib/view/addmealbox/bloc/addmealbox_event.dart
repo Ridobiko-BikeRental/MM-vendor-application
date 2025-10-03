@@ -38,12 +38,12 @@ class PriceChanged extends MealBoxEvent {
   List<Object?> get props => [price];
 }
 
-class DeliveryDateChanged extends MealBoxEvent {
-  final String prepareOrderDays;
-  DeliveryDateChanged(this.prepareOrderDays);
-  @override
-  List<Object?> get props => [prepareOrderDays];
-}
+// class DeliveryDateChanged extends MealBoxEvent {
+//   final String prepareOrderDays;
+//   DeliveryDateChanged(this.prepareOrderDays);
+//   @override
+//   List<Object?> get props => [prepareOrderDays];
+// }
 
 class SampleAvailableChanged extends MealBoxEvent {
   final bool sampleAvailable;
@@ -65,6 +65,20 @@ class PackagingDetailsChanged extends MealBoxEvent {
   PackagingDetailsChanged(this.packagingDetails);
   @override
   List<Object?> get props => [packagingDetails];
+}
+
+class MinmumDayToPrepare extends MealBoxEvent {
+  final String minPrepareOrderDays;
+  MinmumDayToPrepare(this.minPrepareOrderDays);
+  @override
+  List<Object?> get props => [minPrepareOrderDays];
+}
+
+class MaximumDayToPrepare extends MealBoxEvent {
+  final String maxPrepareOrderDays;
+  MaximumDayToPrepare(this.maxPrepareOrderDays);
+  @override
+  List<Object?> get props => [maxPrepareOrderDays];
 }
 
 class PickBoxImageEvent extends MealBoxEvent {

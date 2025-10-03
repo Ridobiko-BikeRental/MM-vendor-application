@@ -21,6 +21,7 @@ class AddProductScreen extends StatefulWidget {
 class _AddProductScreenState extends State<AddProductScreen> {
   List<CategoryModel> _categories = [];
   String? _selectedCategoryId;
+  String? selectedPriceType;
 
   @override
   void initState() {
@@ -302,7 +303,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
                       // ... inside build or widget tree where Quantity and Price input fields are:
                       _buildTextField(
-                        label: "Quantity",
+                        label: "Min Quantity",
                         keyboardType: TextInputType.number,
                         onChanged: (val) => context.read<ProductBloc>().add(
                           QuantityChanged(val),
@@ -310,12 +311,85 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         context: context,
                       ),
                       SizedBox(height: height * 0.025),
+                      _buildTextField(
+                        label: "Minmum Order date",
+                        keyboardType: TextInputType.number,
+                        onChanged: (val) => context.read<ProductBloc>().add(
+                          MinDeliveryDaysChanged(val),
+                        ),
+                        context: context,
+                      ),
+                      SizedBox(height: height * 0.025),
+                      _buildTextField(
+                        label: "Maximum Order date",
+                        keyboardType: TextInputType.number,
+                        onChanged: (val) => context.read<ProductBloc>().add(
+                          MaxDeliveryDaysChanged(val),
+                        ),
+                        context: context,
+                      ),
+                      SizedBox(height: height * 0.025),
 
+                      // Define a variable to keep track of selection
+                      DropdownButtonFormField<String>(
+                        value: selectedPriceType,
+                        decoration: InputDecoration(
+                          labelText: "Price Type",
+                          labelStyle: TextStyle(color: AppColors.primary),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: "unit", child: Text("Unit")),
+                          DropdownMenuItem(value: "gram", child: Text("Gram")),
+                        ],
+                        onChanged: (val) {
+                          selectedPriceType = val;
+                          context.read<ProductBloc>().add(
+                            PriceTypeChanged(val ?? ""),
+                          );
+                        },
+                      ),
+                      SizedBox(height: height * 0.025),
                       _buildTextField(
                         label: "Price Per Unit",
                         keyboardType: TextInputType.number,
                         onChanged: (val) =>
                             context.read<ProductBloc>().add(PriceChanged(val)),
+                        context: context,
+                      ),
+
+                      SizedBox(height: height * 0.025),
+                      Row(
+                        children: [
+                          const Text(
+                            "Delivery Price Available",
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Checkbox(
+                            activeColor: AppColors.primary,
+                            value: state.product.deliveryPriceEnabled,
+                            onChanged: (val) {
+                              if (val != null) {
+                                context.read<ProductBloc>().add(
+                                  DeliveryPriceEnabledChanged(val),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: height * 0.025),
+                      _buildTextField(
+                        label: "Delivery Price",
+                        keyboardType: TextInputType.number,
+                        onChanged: (val) => context.read<ProductBloc>().add(
+                          DeliveryPriceChanged(val),
+                        ),
                         context: context,
                       ),
 

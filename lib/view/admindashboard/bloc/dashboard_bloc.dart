@@ -31,7 +31,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         url,
         headers: {"Authorization": "Bearer $token"},
       );
-      log(response.statusCode.toString());
+      log("asdfghjkl${response.statusCode.toString()}");
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final categoriesJson = data['categories'] as List<dynamic>? ?? [];

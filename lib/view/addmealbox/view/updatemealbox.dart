@@ -29,7 +29,10 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
   List<Map<String, dynamic>> selectedItems = [];
   bool isLoadingItems = false;
 
-  final TextEditingController _deliveryDateController = TextEditingController();
+  final TextEditingController _mindeliveryDateController =
+      TextEditingController();
+  final TextEditingController _maxdeliveryDateController =
+      TextEditingController();
 
   String? _selectedCategoryId;
 
@@ -50,7 +53,8 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
 
     // Format and set delivery date to controller
 
-    bloc.add(DeliveryDateChanged(mb.prepareOrderDays));
+    bloc.add(MinmumDayToPrepare(mb.minPrepareOrderDays.toString()));
+    bloc.add(MaximumDayToPrepare(mb.maxPrepareOrderDays.toString()));
 
     bloc.add(SampleAvailableChanged(mb.sampleAvailable));
     bloc.add(PackagingDetailsChanged(mb.packagingDetails));
@@ -260,7 +264,8 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
 
   @override
   void dispose() {
-    _deliveryDateController.dispose();
+    _mindeliveryDateController.dispose();
+    _maxdeliveryDateController.dispose();
     super.dispose();
   }
 
@@ -319,7 +324,10 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
             previous.description != current.description ||
             previous.minQty != current.minQty ||
             previous.price != current.price ||
-            previous.prepareOrderDays != current.prepareOrderDays ||
+            previous.minPrepareOrderDays.toString() !=
+                current.minPrepareOrderDays.toString() ||
+            previous.maxPrepareOrderDays.toString() !=
+                current.maxPrepareOrderDays.toString() ||
             previous.sampleAvailable != current.sampleAvailable ||
             previous.packagingDetails != current.packagingDetails,
         builder: (context, state) {
@@ -338,8 +346,11 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
           }
 
           // Update delivery date controller if differs from current
-          if (_deliveryDateController.text != state.prepareOrderDays) {
-            _deliveryDateController.text = state.prepareOrderDays;
+          if (_mindeliveryDateController.text != state.minPrepareOrderDays) {
+            _mindeliveryDateController.text = "${state.minPrepareOrderDays}";
+          }
+          if (_maxdeliveryDateController.text != state.maxPrepareOrderDays) {
+            _maxdeliveryDateController.text = "${state.maxPrepareOrderDays}";
           }
 
           return Center(
@@ -493,19 +504,33 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
 
                       // Delivery Date with calendar icon and picker
                       _buildTextField(
-                        label: "Minmum day to prepare)",
-                        keyboardType: TextInputType.datetime,
-                        controller: _deliveryDateController,
-                        readOnly: true,
-                        onChanged: null,
-                        // suffixIcon: IconButton(
-                        //   icon: const Icon(
-                        //     Icons.calendar_today,
-                        //     color: Color(0xFFE95322),
-                        //   ),
-                        //   onPressed: () => _selectDeliveryDate(context),
-                        // ),
-                        // onTap: () => _selectDeliveryDate(context),
+                        label: "Minmum day to prepare",
+                        keyboardType: TextInputType.number,
+                        initialValue: state.minPrepareOrderDays,
+
+                        // readOnly: true,
+                        onChanged: (val) => context.read<MealBoxBloc>().add(
+                          MinmumDayToPrepare(val),
+                        ),
+                        context: context,
+                      ),
+
+                      // suffixIcon: IconButton(
+                      //   icon: const Icon(
+                      //     Icons.calendar_today,
+                      //     color: Color(0xFFE95322),
+                      //   ),
+                      //   onPressed: () => _selectDeliveryDate(context),
+                      // ),
+                      // onTap: () => _selectDeliveryDate(context),
+                      const SizedBox(height: 15),
+                      _buildTextField(
+                        label: "Maximum day to prepare",
+                        keyboardType: TextInputType.number,
+                        initialValue: state.maxPrepareOrderDays,
+                        onChanged: (val) => context.read<MealBoxBloc>().add(
+                          MaximumDayToPrepare(val),
+                        ),
                         context: context,
                       ),
                       const SizedBox(height: 15),

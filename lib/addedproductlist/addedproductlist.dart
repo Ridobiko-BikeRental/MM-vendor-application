@@ -170,44 +170,46 @@ class _AddedproductlistState extends State<Addedproductlist> {
                                       ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(14),
-                                        child: cat.imageUrl.isNotEmpty
-                                            ? Image.network(
-                                                cat.imageUrl,
-                                                fit: BoxFit.cover,
-                                                width: double.infinity,
-                                                loadingBuilder:
-                                                    (
-                                                      context,
-                                                      child,
-                                                      loadingProgress,
-                                                    ) {
-                                                      if (loadingProgress ==
-                                                          null)
-                                                        return child;
-                                                      return const Center(
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                              strokeWidth: 2,
-                                                            ),
-                                                      );
-                                                    },
-                                                errorBuilder: (_, __, ___) =>
-                                                    const Icon(
-                                                      Icons.broken_image,
-                                                      size: 60,
-                                                      color: Colors.grey,
-                                                    ),
-                                              )
-                                            : Container(
-                                                color: Colors.grey.shade100,
-                                                child: const Center(
-                                                  child: Icon(
-                                                    Icons.fastfood,
-                                                    size: 60,
-                                                    color: Colors.grey,
-                                                  ),
+                                        child:
+                                            //  cat.imageUrl.isNotEmpty
+                                            //     ? Image.network(
+                                            //         cat.imageUrl,
+                                            //         fit: BoxFit.cover,
+                                            //         width: double.infinity,
+                                            //         loadingBuilder:
+                                            //             (
+                                            //               context,
+                                            //               child,
+                                            //               loadingProgress,
+                                            //             ) {
+                                            //               if (loadingProgress ==
+                                            //                   null)
+                                            //                 return child;
+                                            //               return const Center(
+                                            //                 child:
+                                            //                     CircularProgressIndicator(
+                                            //                       strokeWidth: 2,
+                                            //                     ),
+                                            //               );
+                                            //             },
+                                            //         errorBuilder: (_, __, ___) =>
+                                            //             const Icon(
+                                            //               Icons.broken_image,
+                                            //               size: 60,
+                                            //               color: Colors.grey,
+                                            //             ),
+                                            //       )
+                                            //     :
+                                            Container(
+                                              color: Colors.grey.shade100,
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.fastfood,
+                                                  size: 60,
+                                                  color: Colors.grey,
                                                 ),
                                               ),
+                                            ),
                                       ),
                                     ),
                                   ),

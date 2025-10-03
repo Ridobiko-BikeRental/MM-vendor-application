@@ -17,7 +17,8 @@ class MealBox {
   final String description;
   final int minQty;
   final int price;
-  final String prepareOrderDays;
+  final int minPrepareOrderDays;
+  final int maxPrepareOrderDays;
   final bool sampleAvailable;
   final List<MealItem> items;
   final String packagingDetails;
@@ -30,7 +31,8 @@ class MealBox {
     required this.description,
     required this.minQty,
     required this.price,
-    required this.prepareOrderDays,
+    required this.minPrepareOrderDays,
+    required this.maxPrepareOrderDays,
     required this.sampleAvailable,
     required this.items,
     required this.packagingDetails,
@@ -50,7 +52,8 @@ class MealBox {
       description: json['description'] ?? '',
       minQty: json['minQty'] ?? 0,
       price: json['price'] ?? 0,
-      prepareOrderDays: json['prepareOrderDays'] ?? '',
+      minPrepareOrderDays: json['minPrepareOrderDays'] ?? 0,
+      maxPrepareOrderDays: json['maxPrepareOrderDays'] ?? 0,
       sampleAvailable: json['sampleAvailable'] ?? false,
       items: mealItems,
       packagingDetails: json['packagingDetails'] ?? '',
@@ -333,10 +336,12 @@ class _MealBoxScreenState extends State<MealBoxScreen> {
                                             ),
                                             ElevatedButton(
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.redAccent,
+                                                backgroundColor:
+                                                    Colors.redAccent,
                                               ),
-                                              onPressed: () =>
-                                                  Navigator.of(context).pop(true),
+                                              onPressed: () => Navigator.of(
+                                                context,
+                                              ).pop(true),
                                               child: const Text("Yes"),
                                             ),
                                           ],
@@ -357,7 +362,9 @@ class _MealBoxScreenState extends State<MealBoxScreen> {
                                         ),
                                         title: Text(
                                           'Edit',
-                                          style: TextStyle(color: AppColors.text),
+                                          style: TextStyle(
+                                            color: AppColors.text,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -370,7 +377,9 @@ class _MealBoxScreenState extends State<MealBoxScreen> {
                                         ),
                                         title: Text(
                                           'Delete',
-                                          style: TextStyle(color: AppColors.text),
+                                          style: TextStyle(
+                                            color: AppColors.text,
+                                          ),
                                         ),
                                       ),
                                     ),

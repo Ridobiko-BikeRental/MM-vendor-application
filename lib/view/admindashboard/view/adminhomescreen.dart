@@ -936,20 +936,20 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
                               ),
                               child: Column(
                                 children: [
-                                  if (cat.imageUrl.isNotEmpty)
-                                    ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(14),
-                                      ),
-                                      child: Image.network(
-                                        cat.imageUrl,
-                                        height:
-                                            size.height * 0.13, // smaller image
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  else
+                                  // if (cat.imageUrl.isNotEmpty)
+                                  //   ClipRRect(
+                                  //     borderRadius: const BorderRadius.vertical(
+                                  //       top: Radius.circular(14),
+                                  //     ),
+                                  //     child: Image.network(
+                                  //       cat.imageUrl,
+                                  //       height:
+                                  //           size.height * 0.13, // smaller image
+                                  //       width: double.infinity,
+                                  //       fit: BoxFit.cover,
+                                  //     ),
+                                  //   )
+                                  // else
                                     const Icon(
                                       Icons.fastfood,
                                       size: 50,

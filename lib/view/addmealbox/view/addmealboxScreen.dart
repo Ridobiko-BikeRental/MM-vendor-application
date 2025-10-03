@@ -482,26 +482,25 @@ class _AddMealBoxScreenState extends State<AddMealBoxScreen> {
                             context.read<MealBoxBloc>().add(PriceChanged(val)),
                         context: context,
                       ),
-                      SizedBox(height: height * 0.025),
+                      // SizedBox(height: height * 0.025),
 
                       // ✅ Delivery Date
+                      SizedBox(height: height * 0.025),
                       _buildTextField(
-                        label: "Minimun day to Prepare",
-                        controller: _deliveryDateController,
-                        keyboardType: TextInputType.number,
-                        // readOnly: true,
-                        // suffixIcon: IconButton(
-                        //   icon: const Icon(
-                        //     Icons.calendar_today,
-                        //     color: Color.fromRGBO(233, 83, 34, 1.0),
-                        //   ),
-                        //   onPressed: () => _selectDeliveryDate(context),
-                        // ),
-                        onChanged: (val) {
-                          context.read<MealBoxBloc>().add(
-                            DeliveryDateChanged(val),
-                          );
-                        },
+                        label: "Minimum day to Prepare",
+                        maxLines: 2,
+                        onChanged: (val) => context.read<MealBoxBloc>().add(
+                          MinmumDayToPrepare(val),
+                        ),
+                        context: context,
+                      ),
+                      SizedBox(height: height * 0.025),
+                      _buildTextField(
+                        label: "Maximum day to Prepare",
+                        maxLines: 2,
+                        onChanged: (val) => context.read<MealBoxBloc>().add(
+                          MaximumDayToPrepare(val),
+                        ),
                         context: context,
                       ),
 
@@ -554,6 +553,7 @@ class _AddMealBoxScreenState extends State<AddMealBoxScreen> {
                         ),
                         context: context,
                       ),
+
                       SizedBox(height: height * 0.025),
 
                       // Submit button
