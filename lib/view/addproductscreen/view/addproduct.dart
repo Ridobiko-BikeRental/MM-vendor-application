@@ -19,7 +19,7 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
-  List<CategoryModel> _categories = [];
+  List<CategoryModelforaddproduct> _categories = [];
   String? _selectedCategoryId;
   String? selectedPriceType;
 
@@ -33,9 +33,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Future<void> _loadCategories() async {
     try {
       final data = await _fetchCategories();
+
+      // Deduplicate fetched categories by id (in case server returns duplicates)
+      final seenIds = <String>{};
+      final deduped = <CategoryModelforaddproduct>[];
+      for (var c in data) {
+        final idStr = c.id.toString();
+        if (!seenIds.contains(idStr)) {
+          seenIds.add(idStr);
+          deduped.add(c);
+        }
+      }
+
       if (mounted) {
         setState(() {
-          _categories = data;
+          _categories = deduped;
         });
       }
     } catch (e) {
@@ -47,10 +59,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  Future<List<CategoryModel>> _fetchCategories() async {
-    final url = Uri.parse(
-      'https://mm-food-backend.onrender.com/api/categories/my-categories-with-subcategories',
-    );
+  Future<List<CategoryModelforaddproduct>> _fetchCategories() async {
+    final url = Uri.parse('https://munchmartfoods.com/vendor/subcategory.php');
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken') ?? '';
@@ -59,13 +69,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
         url,
         headers: {"Authorization": "Bearer $token"},
       );
-      log(response.statusCode.toString());
+      log("jhagdsj${response.statusCode.toString()}");
+      log("response${response.body.toString()}");
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final categoriesJson = data['categories'] as List<dynamic>? ?? [];
-        return _categories = categoriesJson
-            .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+        List<CategoryModelforaddproduct> categories = categoriesJson
+            .map(
+              (e) => CategoryModelforaddproduct.fromJson(
+                e as Map<String, dynamic>,
+              ),
+            )
             .toList();
+        log('Fetched categories count: ${categories.length}');
+        for (var cat in categories) {
+          log('Category: id=${cat.id}, name=${cat.name}');
+        }
+        return categories;
       }
       // } else {
       //   throw Exception(
@@ -164,6 +184,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final height = size.height;
     final isSmall = width < 360;
     final maxContentWidth = 600.0;
+
+    // Ensure selected category is valid
+    // Ensure selected category is valid, reset to null if invalid
+    // Inside build(), after categories are loaded and set
+    // Ensure selected category is valid without calling setState during build
+    final bool isSelectedCategoryValid =
+        _selectedCategoryId != null &&
+        _categories.any((c) => c.id.toString() == _selectedCategoryId);
 
     return Scaffold(
       appBar: AppBar(
@@ -345,7 +373,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           DropdownMenuItem(value: "gram", child: Text("Gram")),
                         ],
                         onChanged: (val) {
-                          selectedPriceType = val;
+                          setState(() {
+                            selectedPriceType = val;
+                          });
                           context.read<ProductBloc>().add(
                             PriceTypeChanged(val ?? ""),
                           );
@@ -413,7 +443,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             isExpanded: true,
-                            value: _selectedCategoryId,
+                            value: isSelectedCategoryValid
+                                ? _selectedCategoryId
+                                : null,
                             hint: const Text('Select Category'),
                             onChanged: (String? newValue) {
                               setState(() {
@@ -424,7 +456,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               category,
                             ) {
                               return DropdownMenuItem<String>(
-                                value: category.id,
+                                value: category.id.toString(),
                                 child: Text(category.name),
                               );
                             }).toList(),

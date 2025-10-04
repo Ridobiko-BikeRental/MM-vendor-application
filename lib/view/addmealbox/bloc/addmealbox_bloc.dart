@@ -171,7 +171,7 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
       final token = prefs.getString('authToken');
       if (token == null) throw Exception('No auth token found');
 
-      Uri uri = Uri.parse('https://mm-food-backend.onrender.com/api/mealbox');
+      Uri uri = Uri.parse('https://munchmartfoods.com/vendor/meal.php');
       final request = http.MultipartRequest('POST', uri);
       request.headers['Authorization'] = 'Bearer $token';
 
@@ -210,7 +210,7 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
       }
 
       final response = await request.send();
-
+      // log('Upload Response Status: ${response.body}');
       if (response.statusCode == 200 || response.statusCode == 201) {
         emit(state.copyWith(isUploading: false, isSuccess: true));
       } else {
@@ -243,16 +243,16 @@ class MealBoxBloc extends Bloc<MealBoxEvent, MealBoxState> {
       final token = prefs.getString('authToken');
       if (token == null) throw Exception('No auth token found');
 
-      final uri = Uri.parse(
-        'https://mm-food-backend.onrender.com/api/mealbox/${event.mealBoxId}',
-      );
-      final request = http.MultipartRequest('PUT', uri);
+      final uri = Uri.parse('https://munchmartfoods.com/vendor/meal.php');
+      final request = http.MultipartRequest('POST', uri);
 
       // Set headers
       request.headers['Authorization'] = 'Bearer $token';
 
       // Add fields
       request.fields['title'] = state.title;
+      request.fields['id'] = event.mealBoxId;
+      request.fields['_method'] = 'PUT'; // For method override
       request.fields['description'] = state.description;
       request.fields['minQty'] = state.minQty;
       request.fields['price'] = state.price;

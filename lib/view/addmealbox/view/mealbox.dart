@@ -11,12 +11,54 @@ import 'package:yumquick/view/widget/app_colors.dart';
 import 'package:yumquick/view/widget/floatingbutton.dart';
 import 'package:yumquick/view/widget/navbar.dart';
 
+// Helpers to safely parse values coming from a loosely-typed backend
+int _parseInt(dynamic v) {
+  if (v == null) return 0;
+  if (v is int) return v;
+  if (v is double) return v.toInt();
+  if (v is String) {
+    return int.tryParse(v) ?? double.tryParse(v)?.toInt() ?? 0;
+  }
+  return 0;
+}
+
+double _parseDouble(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is double) return v;
+  if (v is int) return v.toDouble();
+  if (v is String) return double.tryParse(v) ?? 0.0;
+  return 0.0;
+}
+
+bool _parseBool(dynamic v) {
+  if (v == null) return false;
+  if (v is bool) return v;
+  if (v is int) return v != 0;
+  if (v is String) {
+    final s = v.toLowerCase();
+    return s == '1' || s == 'true' || s == 'yes';
+  }
+  return false;
+}
+
+String _buildImageUrl(dynamic fullUrl, dynamic relativePath) {
+  if (fullUrl != null && fullUrl.toString().isNotEmpty)
+    return fullUrl.toString();
+  if (relativePath != null && relativePath.toString().isNotEmpty) {
+    final s = relativePath.toString();
+    if (s.startsWith('http')) return s;
+    // backend uses relative upload paths - prefix with known host
+    return 'https://munchmartfoods.com/vendor/$s';
+  }
+  return '';
+}
+
 class MealBox {
   final String id;
   final String title;
   final String description;
   final int minQty;
-  final int price;
+  final double price;
   final int minPrepareOrderDays;
   final int maxPrepareOrderDays;
   final bool sampleAvailable;
@@ -41,24 +83,57 @@ class MealBox {
   });
 
   factory MealBox.fromJson(Map<String, dynamic> json) {
-    var itemsList = json['items'] as List? ?? [];
+    var itemsList = json['items'] as List? ?? json['meal_items'] as List? ?? [];
     List<MealItem> mealItems = itemsList
-        .map((item) => MealItem.fromJson(item))
+        .map((item) => MealItem.fromJson(item as Map<String, dynamic>))
         .toList();
 
+    // id can be under '_id' or 'id'
+    final rawId = json['_id'] ?? json['id'];
+    final id = rawId != null ? rawId.toString() : '';
+
+    final title = json['title'] ?? json['name'] ?? '';
+    final description = json['description'] ?? '';
+    final minQty = _parseInt(
+      json['minQty'] ?? json['min_qty'] ?? json['min_quantity'],
+    );
+    final price = _parseDouble(json['price'] ?? json['cost'] ?? json['amount']);
+    final minPrepareOrderDays = _parseInt(
+      json['minPrepareOrderDays'] ??
+          json['min_prepare_order_days'] ??
+          json['minPrepareDays'],
+    );
+    final maxPrepareOrderDays = _parseInt(
+      json['maxPrepareOrderDays'] ?? json['max_prepare_order_days'],
+    );
+    final sampleAvailable = _parseBool(
+      json['sampleAvailable'] ?? json['sample_available'],
+    );
+    final packagingDetails =
+        json['packagingDetails'] ?? json['packaging_details'] ?? '';
+
+    final boxImage = _buildImageUrl(
+      json['boxImage_url'],
+      json['boxImage'] ?? json['box_image'],
+    );
+    final actualImage = _buildImageUrl(
+      json['actualImage_url'],
+      json['actualImage'] ?? json['actual_image'],
+    );
+
     return MealBox(
-      id: json['_id'],
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      minQty: json['minQty'] ?? 0,
-      price: json['price'] ?? 0,
-      minPrepareOrderDays: json['minPrepareOrderDays'] ?? 0,
-      maxPrepareOrderDays: json['maxPrepareOrderDays'] ?? 0,
-      sampleAvailable: json['sampleAvailable'] ?? false,
+      id: id,
+      title: title,
+      description: description,
+      minQty: minQty,
+      price: price,
+      minPrepareOrderDays: minPrepareOrderDays,
+      maxPrepareOrderDays: maxPrepareOrderDays,
+      sampleAvailable: sampleAvailable,
       items: mealItems,
-      packagingDetails: json['packagingDetails'] ?? '',
-      boxImage: json['boxImage'] ?? '',
-      actualImage: json['actualImage'] ?? '',
+      packagingDetails: packagingDetails,
+      boxImage: boxImage,
+      actualImage: actualImage,
     );
   }
 }
@@ -77,11 +152,19 @@ class MealItem {
   });
 
   factory MealItem.fromJson(Map<String, dynamic> json) {
+    final rawId = json['_id'] ?? json['id'];
+    final id = rawId != null ? rawId.toString() : '';
+
+    final image = _buildImageUrl(
+      json['imageUrl'] ?? json['image_url'] ?? json['image'],
+      json['imageUrl'] ?? json['image'],
+    );
+
     return MealItem(
-      id: json['_id'],
-      name: json['name'] ?? '',
-      description: json['description'] ?? '',
-      imageUrl: json['imageUrl'],
+      id: id,
+      name: json['name'] ?? json['title'] ?? '',
+      description: json['description'] ?? json['desc'] ?? '',
+      imageUrl: image.isNotEmpty ? image : null,
     );
   }
 }
@@ -106,17 +189,22 @@ class _MealBoxScreenState extends State<MealBoxScreen> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('authToken');
     final response = await http.get(
-      Uri.parse('https://mm-food-backend.onrender.com/api/mealbox'),
+      Uri.parse('https://munchmartfoods.com/vendor/meal.php'),
       headers: {
         'Authorization': 'Bearer $token',
         // 'Content-Type': 'application/json',
       },
     );
     log("${response.statusCode}");
+    log("${response.body}");
     if (response.statusCode == 200) {
       final Map<String, dynamic> jsonResponse = json.decode(response.body);
       final List<dynamic> mealBoxesList =
-          jsonResponse['data'] ?? jsonResponse['mealBoxes'] ?? [];
+          jsonResponse['data'] ??
+          jsonResponse['mealBoxes'] ??
+          jsonResponse['meal_boxes'] ??
+          jsonResponse['meals'] ??
+          [];
       List<MealBox> mealBoxes = mealBoxesList
           .map((meal) => MealBox.fromJson(meal))
           .toList();
@@ -131,8 +219,15 @@ class _MealBoxScreenState extends State<MealBoxScreen> {
   }
 
   Future<void> deleteMealBox(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken');
     final response = await http.delete(
-      Uri.parse('https://mm-food-backend.onrender.com/api/mealbox/$id'),
+      Uri.parse('https://munchmartfoods.com/vendor/meal.php'),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        "Authorization": "Bearer $token",
+      },
+      body: {'id': id},
     );
 
     if (response.statusCode == 200) {

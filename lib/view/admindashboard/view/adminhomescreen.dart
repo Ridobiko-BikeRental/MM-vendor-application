@@ -914,7 +914,7 @@ class _AdminHomescreenState extends State<AdminHomescreen> {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => SubCategoryScreen(
-                                    subCategories: cat.subCategories,
+                                    subCategories: cat.subcategories,
                                     categoryName: cat.name,
                                   ),
                                 ),

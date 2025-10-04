@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,7 +29,6 @@ class SubCategoryScreen extends StatefulWidget {
 
 class _SubCategoryScreenState extends State<SubCategoryScreen> {
   late List<SubCategoryModel> subCategories;
-  bool isActive = false;
 
   // Colors for classic look
   static const Color primaryDark = AppColors.text;
@@ -42,8 +42,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchCategoriesWithSubcategories() async {
-    const String url =
-        "https://mm-food-backend.onrender.com/api/categories/my-categories-with-subcategories";
+    const String url = "https://munchmartfoods.com/vendor/subcategory.php";
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("authToken");
@@ -53,7 +52,8 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
       Uri.parse(url),
       headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
     );
-
+    log("Response status: ");
+    log("status: ${response.statusCode}");
     if (response.statusCode != 200) {
       throw Exception("Failed: ${response.statusCode}, Body: ${response.body}");
     }
@@ -63,21 +63,46 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
 
     return rawCats.map<Map<String, dynamic>>((e) {
       final String catName = (e['name'] ?? '').toString();
-      final subs = (e['subCategories'] as List? ?? [])
+
+      final subs = (e['subcategories'] as List? ?? [])
           .map<Map<String, dynamic>>((sub) {
             return {
-              'id': (sub['_id'] ?? '').toString(),
+              'id': (sub['id'] ?? sub['_id'] ?? '').toString(),
               'name': (sub['name'] ?? '').toString(),
               'description': (sub['description'] ?? '').toString(),
-              'pricePerUnit': sub['pricePerUnit'] ?? 0,
-              'imageUrl': (sub['imageUrl'] ?? '').toString(),
-              'available': sub['available'] ?? false,
-              'quantity': sub['quantity'] ?? 0,
-              'category': (sub['category'] ?? '').toString(),
-              'discount': sub['discount'] ?? 0,
+              'pricePerUnit':
+                  int.tryParse(sub['pricePerUnit']?.toString() ?? '') ?? 0,
+              'imageUrl': (sub['imageUrl'] ?? sub['image_url'] ?? '')
+                  .toString(),
+              'available': sub['available'] == null
+                  ? true
+                  : (sub['available'] is int
+                        ? sub['available'] == 1
+                        : sub['available'].toString().toLowerCase() == 'true'),
+              'quantity': int.tryParse(sub['quantity']?.toString() ?? '') ?? 0,
+              'minDeliveryDays':
+                  int.tryParse(sub['minDeliveryDays']?.toString() ?? '') ?? 0,
+              'maxDeliveryDays':
+                  int.tryParse(sub['maxDeliveryDays']?.toString() ?? '') ?? 0,
+              'deliveryPrice':
+                  double.tryParse(sub['deliveryPrice']?.toString() ?? '') ??
+                  0.0,
+              'category': (sub['category_id'] ?? sub['category'] ?? '')
+                  .toString(),
+              'priceType': (sub['priceType'] ?? '').toString(),
+              'discount': int.tryParse(sub['discount']?.toString() ?? '') ?? 0,
+              'deliveryPriceEnabled': sub['deliveryPriceEnabled'] == null
+                  ? false
+                  : (sub['deliveryPriceEnabled'] is int
+                        ? sub['deliveryPriceEnabled'] == 1
+                        : sub['deliveryPriceEnabled']
+                                  .toString()
+                                  .toLowerCase() ==
+                              'true'),
             };
           })
           .toList();
+
       return {'name': catName, 'subcategories': subs};
     }).toList();
   }
@@ -88,7 +113,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
 
       final selected = allCats.firstWhere(
         (cat) =>
-            (cat['name'] as String).trim().toLowerCase() ==
+            (cat['name'] ?? '').toString().trim().toLowerCase() ==
             widget.categoryName.trim().toLowerCase(),
         orElse: () => {'subcategories': <Map<String, dynamic>>[]},
       );
@@ -98,24 +123,44 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
       );
 
       setState(() {
-        subCategories = subcats
-            .map(
-              (e) => SubCategoryModel(
-                id: e['id'] ?? '',
-                name: e['name'] ?? '',
-                priceType: e['priceType'] ?? '',
-                description: e['description'] ?? '',
-                pricePerUnit: e['pricePerUnit'] ?? 0,
-                deliveryPrice: e['deliveryPrice'] ?? 0,
-                imageUrl: e['imageUrl'] ?? '',
-                available: e['available'] ?? false,
-                deliveryPriceEnabled: e['deliveryPriceEnabled'] ?? false,
-                qunatity: e['quantity'] ?? 0,
-                catId: e['category'] ?? '',
-                discount: e['discount'] ?? 0,
-              ),
-            )
-            .toList();
+        subCategories = subcats.map((e) {
+          final id = (e['id'] ?? '0').toString();
+          final name = (e['name'] ?? '').toString();
+          final priceType = (e['priceType'] ?? '').toString();
+          final description = (e['description'] ?? '').toString();
+          final pricePerUnit =
+              int.tryParse(e['pricePerUnit']?.toString() ?? '') ?? 0;
+          final deliveryPrice =
+              double.tryParse(e['deliveryPrice']?.toString() ?? '') ?? 0.0;
+          final imageUrl = (e['imageUrl'] ?? '').toString();
+          final deliveryPriceEnabled = e['deliveryPriceEnabled'] == null
+              ? false
+              : (e['deliveryPriceEnabled'] is int
+                    ? e['deliveryPriceEnabled'] == 1
+                    : e['deliveryPriceEnabled'].toString().toLowerCase() ==
+                          'true');
+          final minDeliveryDays =
+              int.tryParse(e['minDeliveryDays']?.toString() ?? '') ?? 0;
+          final maxDeliveryDays =
+              int.tryParse(e['maxDeliveryDays']?.toString() ?? '') ?? 0;
+          final quantity = int.tryParse(e['quantity']?.toString() ?? '') ?? 0;
+          final catId = (e['category'] ?? '').toString();
+
+          return SubCategoryModel(
+            id: int.tryParse(id) ?? 0,
+            categoryId: int.tryParse(catId) ?? 0,
+            name: name,
+            description: description,
+            pricePerUnit: pricePerUnit,
+            priceType: priceType,
+            imageUrl: imageUrl.isNotEmpty ? imageUrl : null,
+            quantity: quantity,
+            minDeliveryDays: minDeliveryDays,
+            maxDeliveryDays: maxDeliveryDays,
+            deliveryPrice: deliveryPrice,
+            deliveryPriceEnabled: deliveryPriceEnabled ? 1 : 0,
+          );
+        }).toList();
       });
     } catch (e) {
       if (!mounted) return;
@@ -181,9 +226,6 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
 
               if (updated == true) {
                 await reloadSubCategories();
-                // ScaffoldMessenger.of(context).showSnackBar(
-                //   const SnackBar(content: Text('')),
-                // );
               }
             },
             icon: Icon(Icons.discount_sharp, color: AppColors.background),
@@ -231,9 +273,9 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(14),
-                          child: sc.imageUrl.isNotEmpty
+                          child: sc.imageUrl != null && sc.imageUrl!.isNotEmpty
                               ? Image.network(
-                                  sc.imageUrl,
+                                  sc.imageUrl!,
                                   width: width * 0.18,
                                   height: width * 0.18,
                                   fit: BoxFit.cover,
@@ -273,107 +315,12 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              sc.discount == 0
-                                  ? Text(
-                                      "₹${sc.pricePerUnit}",
-                                      style: const TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold,
-                                        color: primaryDark,
-                                      ),
-                                    )
-                                  : Row(
-                                      children: [
-                                        Text(
-                                          "₹${sc.pricePerUnit}",
-                                          style: const TextStyle(
-                                            decoration:
-                                                TextDecoration.lineThrough,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text(
-                                          "₹${(sc.pricePerUnit * (100 - sc.discount) / 100).toStringAsFixed(0)}",
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
                             ],
                           ),
                         ),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Switch(
-                              activeColor: primaryDark,
-                              value: sc.available,
-                              onChanged: (bool newValue) async {
-                                try {
-                                  final prefs =
-                                      await SharedPreferences.getInstance();
-                                  final token =
-                                      prefs.getString('authToken') ?? '';
-                                  final url = Uri.parse(
-                                    'https://mm-food-backend.onrender.com/api/categories/update-subcategory-availability/${sc.id}',
-                                  );
-                                  final response = await http.put(
-                                    url,
-                                    headers: {
-                                      'Authorization': 'Bearer $token',
-                                      'Content-Type': 'application/json',
-                                    },
-                                    body: jsonEncode({'available': newValue}),
-                                  );
-
-                                  if (response.statusCode == 200) {
-                                    setState(() {
-                                      subCategories[index] = SubCategoryModel(
-                                        discount: sc.discount,
-                                        id: sc.id,
-                                        priceType: sc.priceType,
-                                        name: sc.name,
-                                        description: sc.description,
-                                        pricePerUnit: sc.pricePerUnit,
-                                        deliveryPrice: sc.deliveryPrice,
-                                        imageUrl: sc.imageUrl,
-                                        available: newValue,
-                                        deliveryPriceEnabled: sc.deliveryPriceEnabled,
-                                        qunatity: sc.qunatity,
-                                        catId: sc.catId,
-                                      );
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Availability updated'),
-                                      ),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Failed to update availability',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Error updating availability: $e',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
                             PopupMenuButton<String>(
                               icon: const Icon(
                                 Icons.more_vert,
@@ -386,13 +333,23 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                                         MaterialPageRoute(
                                           builder: (context) {
                                             return Upadtesubcatscreen(
+                                              maximumorderDate:
+                                                  sc.maxDeliveryDays,
+                                              minimumorderDate:
+                                                  sc.minDeliveryDays,
+                                              deliveryPrize: sc.deliveryPrice,
+                                              prizeType: sc.priceType,
                                               name: sc.name,
                                               id: sc.id,
                                               image: sc.imageUrl,
                                               dec: sc.description,
-                                              prize: sc.pricePerUnit,
-                                              quantity: sc.qunatity,
-                                              categoryId: sc.catId,
+                                              prize: sc.pricePerUnit.toString(),
+                                              quantity: sc.quantity,
+                                              categoryId: sc.categoryId,
+                                              deliverybool:
+                                                  sc.deliveryPriceEnabled == 1
+                                                  ? true
+                                                  : false,
                                             );
                                           },
                                         ),
@@ -448,6 +405,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                                   child: Row(
                                     children: [
                                       Icon(Icons.edit, color: AppColors.text),
+                                      SizedBox(width: 6),
                                       Text(
                                         'Edit',
                                         style: TextStyle(color: AppColors.text),
@@ -460,6 +418,7 @@ class _SubCategoryScreenState extends State<SubCategoryScreen> {
                                   child: Row(
                                     children: [
                                       Icon(Icons.delete, color: AppColors.text),
+                                      SizedBox(width: 6),
                                       Text(
                                         'Delete',
                                         style: TextStyle(color: AppColors.text),

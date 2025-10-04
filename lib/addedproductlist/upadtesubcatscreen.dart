@@ -10,17 +10,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yumquick/view/addproductscreen/bloc/addproduct_bloc.dart';
 import 'package:yumquick/view/addproductscreen/bloc/addproduct_event.dart';
 import 'package:yumquick/view/addproductscreen/bloc/addproduct_state.dart';
+import 'package:yumquick/view/admindashboard/model/catogrymodel.dart';
 import 'package:yumquick/view/widget/app_colors.dart';
 import 'package:yumquick/view/widget/navbar.dart';
 
 class Upadtesubcatscreen extends StatefulWidget {
-  final String id;
+  final int id;
   final String? name;
   final String? image;
   final String? dec;
-  final int? prize;
+  final String? prize;
   final int? quantity;
-  final String? categoryId;
+  final int? categoryId;
+  final int? minimumorderDate;
+  final int? maximumorderDate;
+  final double? deliveryPrize;
+  final bool deliverybool;
+  final String? prizeType;
 
   const Upadtesubcatscreen({
     super.key,
@@ -31,6 +37,11 @@ class Upadtesubcatscreen extends StatefulWidget {
     this.prize,
     this.quantity,
     this.categoryId,
+    this.minimumorderDate,
+    this.maximumorderDate,
+    this.deliveryPrize,
+    required this.deliverybool,
+    this.prizeType,
   });
 
   @override
@@ -38,15 +49,20 @@ class Upadtesubcatscreen extends StatefulWidget {
 }
 
 class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
-  List<Map<String, dynamic>> _categories = [];
+  List<CategoryModelforaddproduct> _categories = [];
   String? _selectedCategoryId;
 
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   late TextEditingController _quantityController;
+  late TextEditingController _minDeliveryDaysController;
+  late TextEditingController _maxDeliveryDaysController;
+  late TextEditingController _deliveryPriceController;
 
   File? _pickedImageFile;
+  String? selectedPriceType;
+  bool deliveryPriceEnabled = false;
 
   @override
   void initState() {
@@ -62,8 +78,20 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
     _quantityController = TextEditingController(
       text: widget.quantity?.toString() ?? '',
     );
+    _minDeliveryDaysController = TextEditingController(
+      text: widget.minimumorderDate?.toString() ?? '',
+    );
+    _maxDeliveryDaysController = TextEditingController(
+      text: widget.maximumorderDate?.toString() ?? '',
+    );
+    _deliveryPriceController = TextEditingController(
+      text: widget.deliveryPrize?.toString() ?? '',
+    );
 
-    _selectedCategoryId = widget.categoryId;
+    // Coerce incoming values to strings to avoid runtime type errors
+    _selectedCategoryId = widget.categoryId?.toString();
+    selectedPriceType = widget.prizeType?.toString();
+    deliveryPriceEnabled = widget.deliverybool;
   }
 
   @override
@@ -72,15 +100,30 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     _quantityController.dispose();
+    _minDeliveryDaysController.dispose();
+    _maxDeliveryDaysController.dispose();
+    _deliveryPriceController.dispose();
     super.dispose();
   }
 
   Future<void> _loadCategories() async {
     try {
       final data = await _fetchCategories();
+
+      // Deduplicate fetched categories by id (in case server returns duplicates)
+      final seenIds = <String>{};
+      final deduped = <CategoryModelforaddproduct>[];
+      for (var c in data) {
+        final idStr = c.id.toString();
+        if (!seenIds.contains(idStr)) {
+          seenIds.add(idStr);
+          deduped.add(c);
+        }
+      }
+
       if (mounted) {
         setState(() {
-          _categories = data;
+          _categories = deduped;
         });
       }
     } catch (e) {
@@ -92,37 +135,43 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _fetchCategories() async {
-    const String url =
-        "https://mm-food-backend.onrender.com/api/categories/all";
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("authToken");
-
-    if (token == null) {
-      throw Exception("No token found in SharedPreferences");
-    }
-
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
-    );
-
-    if (response.statusCode == 200) {
-      log("${response.statusCode}");
-      final responseData = json.decode(response.body);
-      final List<dynamic> data =
-          responseData['categories'] ?? responseData ?? [];
-      log("${data.length}");
-      return data
-          .map<Map<String, dynamic>>(
-            (e) => {'id': e['_id'] ?? '', 'name': e['name'] ?? ''},
-          )
-          .toList();
-    } else {
-      throw Exception(
-        "Failed to load categories: ${response.statusCode}, Body: ${response.body}",
+  Future<List<CategoryModelforaddproduct>> _fetchCategories() async {
+    final url = Uri.parse('https://munchmartfoods.com/vendor/subcategory.php');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('authToken') ?? '';
+      log(token);
+      final response = await http.get(
+        url,
+        headers: {"Authorization": "Bearer $token"},
       );
+      log("jhagdsj${response.statusCode.toString()}");
+      log("response${response.body.toString()}");
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final categoriesJson = data['categories'] as List<dynamic>? ?? [];
+        List<CategoryModelforaddproduct> categories = categoriesJson
+            .map(
+              (e) => CategoryModelforaddproduct.fromJson(
+                e as Map<String, dynamic>,
+              ),
+            )
+            .toList();
+        log('Fetched categories count: ${categories.length}');
+        for (var cat in categories) {
+          log('Category: id=${cat.id}, name=${cat.name}');
+        }
+        return categories;
+      }
+      // } else {
+      //   throw Exception(
+      //     "Failed to load categories: ${response.statusCode}, Body: ${response.body}",
+      //   );
+      // }
+    } catch (e) {
+      throw Exception('Error fetching categories: $e');
     }
+    return [];
   }
 
   void _showImageSourceActionSheet(BuildContext context) {
@@ -176,26 +225,42 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
       ).showSnackBar(const SnackBar(content: Text('Please select a category')));
       return;
     }
+
     final String url =
-        'https://mm-food-backend.onrender.com/api/categories/update-subcategory/${widget.id}';
+        'https://munchmartfoods.com/vendor/subcategory.php?id=${widget.id}';
 
     final Map<String, dynamic> body = {
       "name": _nameController.text.trim(),
       "description": _descriptionController.text.trim(),
       "pricePerUnit": int.tryParse(_priceController.text.trim()) ?? 0,
-      "imageUrl": _pickedImageFile == null ? (widget.image ?? '') : '',
-      "category": _selectedCategoryId!,
+      "image_url": _pickedImageFile == null ? (widget.image ?? '') : '',
+      "categoryId": _selectedCategoryId!.toString(),
+
       "quantity": int.tryParse(_quantityController.text.trim()) ?? 0,
+      "minDeliveryDays":
+          int.tryParse(_minDeliveryDaysController.text.trim()) ?? 0,
+      "maxDeliveryDays":
+          int.tryParse(_maxDeliveryDaysController.text.trim()) ?? 0,
+      "deliveryPrice": int.tryParse(_deliveryPriceController.text.trim()) ?? 0,
+      "deliveryPriceEnabled": deliveryPriceEnabled,
+      "priceType": selectedPriceType ?? "",
     };
 
-    // TODO: Add image upload logic here if needed and set imageUrl properly before sending.
+    // TODO: Add image upload logic here if needed and set image_url properly before sending.
 
     try {
-      final response = await http.put(
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('authToken') ?? '';
+
+      final response = await http.post(
         Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode(body),
+        headers: {
+          // "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: body,
       );
+      log(response.body);
       if (response.statusCode == 200) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -204,12 +269,18 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
         Navigator.of(context).pop(true);
       } else {
         if (!mounted) return;
+        log(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update subcategory')),
+          SnackBar(
+            content: Text(
+              'Failed to update subcategory: ${response.statusCode} - ${response.body}',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
+      log(e.toString());
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error updating subcategory: $e')));
@@ -217,34 +288,34 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
   }
 
   Widget _buildTextField({
+    int? maxlenght,
     required String label,
     int maxLines = 1,
-    int? maxLength,
     TextInputType keyboardType = TextInputType.text,
     required ValueChanged<String> onChanged,
-    required TextEditingController controller,
+    required BuildContext context,
+    TextEditingController? controller,
   }) {
-    final bool isSmall = MediaQuery.of(context).size.width < 360;
-
+    final isSmall = MediaQuery.of(context).size.width < 360;
     return TextFormField(
       controller: controller,
       onChanged: onChanged,
       maxLines: maxLines,
-      maxLength: maxLength,
+      maxLength: maxlenght,
       keyboardType: keyboardType,
-      style: const TextStyle(color: AppColors.text),
+      style: const TextStyle(color: Colors.black87),
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.grey[50],
         labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFFE95322)),
+        labelStyle: const TextStyle(color: Color.fromRGBO(233, 83, 34, 1.0)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1),
+          borderSide: const BorderSide(color: AppColors.primary),
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
         contentPadding: EdgeInsets.symmetric(
@@ -273,7 +344,6 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        // centerTitle: true,
         elevation: 5,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -394,40 +464,125 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
                       ),
                       SizedBox(height: height * 0.035),
                       _buildTextField(
-                        label: 'Name',
+                        label: "Product Name",
                         controller: _nameController,
-                        onChanged: (val) {
-                          context.read<ProductBloc>().add(NameChanged(val));
-                        },
+                        onChanged: (val) =>
+                            context.read<ProductBloc>().add(NameChanged(val)),
+                        context: context,
                       ),
                       SizedBox(height: height * 0.025),
                       _buildTextField(
-                        label: 'Description',
-                        controller: _descriptionController,
+                        label: "Short Description",
                         maxLines: 2,
+                        maxlenght: 80,
+                        controller: _descriptionController,
+                        onChanged: (val) => context.read<ProductBloc>().add(
+                          DescriptionChanged(val),
+                        ),
+                        context: context,
+                      ),
+                      SizedBox(height: height * 0.025),
+                      _buildTextField(
+                        label: "Min Quantity",
+                        keyboardType: TextInputType.number,
+                        controller: _quantityController,
+                        onChanged: (val) => context.read<ProductBloc>().add(
+                          QuantityChanged(val),
+                        ),
+                        context: context,
+                      ),
+                      SizedBox(height: height * 0.025),
+                      _buildTextField(
+                        label: "Minimum Order date",
+                        keyboardType: TextInputType.number,
+                        controller: _minDeliveryDaysController,
+                        onChanged: (val) => context.read<ProductBloc>().add(
+                          MinDeliveryDaysChanged(val),
+                        ),
+                        context: context,
+                      ),
+                      SizedBox(height: height * 0.025),
+                      _buildTextField(
+                        label: "Maximum Order date",
+                        keyboardType: TextInputType.number,
+                        controller: _maxDeliveryDaysController,
+                        onChanged: (val) => context.read<ProductBloc>().add(
+                          MaxDeliveryDaysChanged(val),
+                        ),
+                        context: context,
+                      ),
+                      SizedBox(height: height * 0.025),
+                      DropdownButtonFormField<String>(
+                        // Only provide a non-null value if it matches one of the items
+                        value:
+                            (selectedPriceType != null &&
+                                (['unit', 'gram'].contains(selectedPriceType)))
+                            ? selectedPriceType
+                            : null,
+                        decoration: InputDecoration(
+                          labelText: "Price Type",
+                          labelStyle: TextStyle(color: AppColors.primary),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: "unit", child: Text("Unit")),
+                          DropdownMenuItem(value: "gram", child: Text("Gram")),
+                        ],
                         onChanged: (val) {
+                          setState(() {
+                            selectedPriceType = val;
+                          });
                           context.read<ProductBloc>().add(
-                            DescriptionChanged(val),
+                            PriceTypeChanged(val ?? ""),
                           );
                         },
                       ),
                       SizedBox(height: height * 0.025),
                       _buildTextField(
-                        label: 'Quantity',
-                        controller: _quantityController,
+                        label: "Price Per Unit",
                         keyboardType: TextInputType.number,
-                        onChanged: (val) {
-                          context.read<ProductBloc>().add(QuantityChanged(val));
-                        },
+                        controller: _priceController,
+                        onChanged: (val) =>
+                            context.read<ProductBloc>().add(PriceChanged(val)),
+                        context: context,
+                      ),
+                      SizedBox(height: height * 0.025),
+                      Row(
+                        children: [
+                          const Text(
+                            "Delivery Price Available",
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Checkbox(
+                            activeColor: AppColors.primary,
+                            value: deliveryPriceEnabled,
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  deliveryPriceEnabled = val;
+                                });
+                                context.read<ProductBloc>().add(
+                                  DeliveryPriceEnabledChanged(val),
+                                );
+                              }
+                            },
+                          ),
+                        ],
                       ),
                       SizedBox(height: height * 0.025),
                       _buildTextField(
-                        label: 'Price',
-                        controller: _priceController,
+                        label: "Delivery Price",
                         keyboardType: TextInputType.number,
-                        onChanged: (val) {
-                          context.read<ProductBloc>().add(PriceChanged(val));
-                        },
+                        controller: _deliveryPriceController,
+                        onChanged: (val) => context.read<ProductBloc>().add(
+                          DeliveryPriceChanged(val),
+                        ),
+                        context: context,
                       ),
                       SizedBox(height: height * 0.025),
                       InputDecorator(
@@ -445,23 +600,44 @@ class _UpadtesubcatscreenState extends State<Upadtesubcatscreen> {
                           ),
                         ),
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: _selectedCategoryId,
-                            hint: const Text('Select Category'),
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _selectedCategoryId = newValue;
-                              });
-                            },
-                            items: _categories.map<DropdownMenuItem<String>>((
-                              category,
-                            ) {
-                              return DropdownMenuItem<String>(
-                                value: category['id'],
-                                child: Text(category['name']),
+                          child: Builder(
+                            builder: (context) {
+                              // Build unique dropdown items and ensure selected value exists
+                              final seen = <String>{};
+                              final items = <DropdownMenuItem<String>>[];
+                              for (var category in _categories) {
+                                final val = category.id.toString();
+                                if (!seen.contains(val)) {
+                                  seen.add(val);
+                                  items.add(
+                                    DropdownMenuItem<String>(
+                                      value: val,
+                                      child: Text(category.name),
+                                    ),
+                                  );
+                                }
+                              }
+
+                              final selectedValue =
+                                  (_selectedCategoryId != null &&
+                                      items.any(
+                                        (i) => i.value == _selectedCategoryId,
+                                      ))
+                                  ? _selectedCategoryId
+                                  : null;
+
+                              return DropdownButton<String>(
+                                isExpanded: true,
+                                value: selectedValue,
+                                hint: const Text('Select Category'),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _selectedCategoryId = newValue;
+                                  });
+                                },
+                                items: items,
                               );
-                            }).toList(),
+                            },
                           ),
                         ),
                       ),

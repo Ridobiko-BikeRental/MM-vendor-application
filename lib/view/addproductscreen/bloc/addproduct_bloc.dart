@@ -168,9 +168,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken') ?? '';
 
-      var uri = Uri.parse(
-        'https://mm-food-backend.onrender.com/api/categories/add-subcategory',
-      );
+      var uri = Uri.parse('https://munchmartfoods.com/vendor/subcategory.php');
       var request = http.MultipartRequest('POST', uri);
 
       // Add Authorization header if token exists
@@ -186,8 +184,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         'name': product.name,
         'description': product.shortDescription,
         'pricePerUnit': product.pricePerUnit,
-        'categoryId': event.categoryId,
-        'minQty': product.minQty,
+        'category_id': event.categoryId,
+        'quantity': product.minQty,
         'deliveryPriceEnabled': product.deliveryPriceEnabled.toString(),
         'deliveryPrice': product.deliveryPrice,
         "priceType": product.priceType,
@@ -206,7 +204,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       var response = await request.send();
       var respStr = await response.stream.bytesToString();
 
-      log("Response Status: ${response.statusCode}");
+      log("Response Status: ${respStr}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(respStr);

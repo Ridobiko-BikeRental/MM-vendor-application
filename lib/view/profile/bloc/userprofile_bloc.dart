@@ -17,7 +17,6 @@ class UserprofileBloc extends Bloc<UserprofileEvent, UserprofileState> {
     on<UpdateUserProfile>(_onUpdateUserProfile);
     on<LogoutUser>(_onLogoutUser);
   }
-
   Future<void> _onLoadUserProfile(
     LoadUserProfile event,
     Emitter<UserprofileState> emit,
@@ -27,25 +26,35 @@ class UserprofileBloc extends Bloc<UserprofileEvent, UserprofileState> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
       log("Token: $token");
-      final response = await http.get(
-        Uri.parse('https://mm-food-backend.onrender.com/api/vendors/profile'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-      );
+      // await prefs.setBool('loggedIn', false);
 
+      final response = await http.get(
+        Uri.parse('https://munchmartfoods.com/vendor/profile.php'),
+        headers: {"Authorization": "Bearer $token"},
+      );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final id = UserModel.fromJson(data);
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('vendorID', id.vendId);
+        log("Response body: ${response.body}");
+        final vendorMap = data['vendor'];
+        if (vendorMap == null) {
+          emit(UserProfileError("Vendor data not found"));
+          return;
+        }
 
-        log("profile${id.vendId}");
+        final userModel = UserModel.fromJson(vendorMap);
 
-        emit(UserProfileLoaded(UserModel.fromJson(data)));
+        await prefs.setString('vendorID', userModel.vendId);
+
+        log("Profile Data: $data");
+        log("profile${userModel.vendId}");
+
+        emit(UserProfileLoaded(userModel));
       } else {
-        emit(UserProfileError("Could not load profile"));
+        emit(
+          UserProfileError(
+            "Could not load profile, Status: ${response.statusCode}",
+          ),
+        );
       }
     } catch (e) {
       emit(UserProfileError(e.toString()));
@@ -60,37 +69,46 @@ class UserprofileBloc extends Bloc<UserprofileEvent, UserprofileState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
-      var uri = Uri.parse(
-        'https://mm-food-backend.onrender.com/api/vendors/profile',
-      );
-      var request = http.MultipartRequest('PUT', uri);
+      var uri = Uri.parse('https://munchmartfoods.com/vendor/profile.php');
+      var request = http.MultipartRequest('POST', uri);
 
       // Add auth token to headers if present
       if (token != null && token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
       }
-      request.headers['Content-Type'] = 'application/json';
 
-      // Convert all values from dynamic to String
+      // Remove this, MultipartRequest adds correct content-type and boundary
+      // request.headers['Content-Type'] = 'application/json';
+
+      // Convert all values from dynamic to String and add to fields
       final Map<String, String> fields = event.user.toJson().map(
         (key, value) => MapEntry(key, value?.toString() ?? ''),
       );
       request.fields.addAll(fields);
 
+      // Add image file if exists
       if (event.imageFile != null) {
         request.files.add(
-          await http.MultipartFile.fromPath('image', event.imageFile!.path),
+          await http.MultipartFile.fromPath(
+            'profile_image ',
+            event.imageFile!.path,
+          ),
         );
       }
 
       var response = await request.send();
       var respStr = await response.stream.bytesToString();
+      log("Update Response: ${response.statusCode}, Body: $respStr");
 
       if (response.statusCode == 200) {
         final data = json.decode(respStr);
         emit(UserProfileUpdated(UserModel.fromJson(data['vendor'])));
       } else {
-        emit(UserProfileError("Could not update profile"));
+        emit(
+          UserProfileError(
+            "Could not update profile, Status: ${response.statusCode}",
+          ),
+        );
       }
     } catch (e) {
       emit(UserProfileError(e.toString()));
@@ -106,9 +124,9 @@ class UserprofileBloc extends Bloc<UserprofileEvent, UserprofileState> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
       final response = await http.post(
-        Uri.parse('https://mm-food-backend.onrender.com/api/vendors/logout'),
+        Uri.parse('https://munchmartfoods.com/vendor/logout.php'),
         headers: {
-          "Content-Type": "application/json",
+          // "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
       );

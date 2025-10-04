@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -53,6 +54,7 @@ class _MyprofileScreenState extends State<MyprofileScreen> {
       body: BlocConsumer<UserprofileBloc, UserprofileState>(
         listener: (context, state) {
           if (state is UserProfileError) {
+            log(state.message);
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));

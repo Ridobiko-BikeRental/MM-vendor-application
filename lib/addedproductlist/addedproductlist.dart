@@ -109,7 +109,7 @@ class _AddedproductlistState extends State<Addedproductlist> {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => SubCategoryScreen(
-                                    subCategories: cat.subCategories,
+                                    subCategories: cat.subcategories,
                                     categoryName: cat.name,
                                   ),
                                 ),

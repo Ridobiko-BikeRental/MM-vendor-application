@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
@@ -11,7 +12,7 @@ part 'add_items_event.dart';
 part 'add_items_state.dart';
 
 class AddItemsBloc extends Bloc<AddItemsEvent, AddItemsState> {
-  static const String baseUrl = 'https://mm-food-backend.onrender.com/api/item';
+  static const String baseUrl = 'https://munchmartfoods.com/vendor/item.php';
 
   AddItemsBloc() : super(AddItemsInitial()) {
     on<LoadItemsRequested>(_onLoadItems);
@@ -39,6 +40,7 @@ class AddItemsBloc extends Bloc<AddItemsEvent, AddItemsState> {
           'Content-Type': 'application/json',
         },
       );
+      log('LoadItems Response: ${response.body}');
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final itemsJson = data['items'] as List;
@@ -67,7 +69,7 @@ class AddItemsBloc extends Bloc<AddItemsEvent, AddItemsState> {
       }
 
       request.fields['name'] = event.name;
-      request.fields['cost'] = event.cost.toString();
+      request.fields['cost'] = event.cost;
       request.fields['description'] = event.description;
 
       if (event.image.isNotEmpty && File(event.image).existsSync()) {
@@ -98,7 +100,7 @@ class AddItemsBloc extends Bloc<AddItemsEvent, AddItemsState> {
     try {
       final token = await _getAuthToken();
       final response = await http.delete(
-        Uri.parse('$baseUrl/${event.id}'),
+        Uri.parse('$baseUrl?id=${event.id}'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -121,26 +123,33 @@ class AddItemsBloc extends Bloc<AddItemsEvent, AddItemsState> {
     emit(AddItemsLoading());
     try {
       final token = await _getAuthToken();
-      final uri = Uri.parse('$baseUrl/${event.id}');
-      final request = http.MultipartRequest('PUT', uri);
+      final uri = Uri.parse(baseUrl);
+
+      final request = http.MultipartRequest('POST', uri);
 
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
+        // DO NOT set Content-Type header manually here!
       }
 
+      // Add form fields
+      request.fields['id'] = event.id;
       request.fields['name'] = event.name;
       request.fields['cost'] = event.cost.toString();
       request.fields['description'] = event.description;
+      request.fields['_method'] = "PUT"; // Method override for PUT
 
+      // Attach image if present
       if (event.image.isNotEmpty && File(event.image).existsSync()) {
         request.files.add(
           await http.MultipartFile.fromPath('image', event.image),
         );
       }
+
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      if (streamedResponse.statusCode == 200) {
+      if (response.statusCode == 200) {
         add(LoadItemsRequested());
       } else {
         emit(AddItemsOperationFailure('Failed to edit item: ${response.body}'));

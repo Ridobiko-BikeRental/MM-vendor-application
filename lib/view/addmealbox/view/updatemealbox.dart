@@ -63,7 +63,7 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
     selectedItems = mb.items
         .map(
           (item) => {
-            '_id': item.id,
+            'id': item.id,
             'name': item.name,
             'description': item.description,
           },
@@ -88,7 +88,7 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
       final response = await http.get(
-        Uri.parse("https://mm-food-backend.onrender.com/api/item"),
+        Uri.parse("https://munchmartfoods.com/vendor/item.php"),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -98,10 +98,12 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
         final body = jsonDecode(response.body);
         final rawItems = body['items'] as List? ?? [];
         final items = rawItems.map<Map<String, dynamic>>((item) {
+          // Normalize values to String to ensure consistent comparisons
+          final idVal = item['id'] ?? item['_id'] ?? '';
           return {
-            '_id': item['_id'] ?? '',
-            'name': item['name'] ?? '',
-            'description': item['description'] ?? '',
+            'id': idVal.toString(),
+            'name': (item['name'] ?? '').toString(),
+            'description': (item['description'] ?? '').toString(),
           };
         }).toList();
 
@@ -126,12 +128,20 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
     final bloc = context.read<MealBoxBloc>();
     if (checked ?? false) {
       // Add item if not already selected
-      if (!selectedItems.any((e) => e['_id'] == item['_id'])) {
-        selectedItems.add(item);
+      if (!selectedItems.any(
+        (e) => e['id'].toString() == item['id'].toString(),
+      )) {
+        selectedItems.add({
+          'id': item['id'].toString(),
+          'name': item['name'].toString(),
+          'description': item['description'].toString(),
+        });
       }
     } else {
       // Remove item if found
-      selectedItems.removeWhere((e) => e['_id'] == item['_id']);
+      selectedItems.removeWhere(
+        (e) => e['id'].toString() == item['id'].toString(),
+      );
     }
     bloc.add(ItemsChanged(jsonEncode(selectedItems)));
   }
@@ -153,10 +163,12 @@ class _UpdateMealBoxScreenState extends State<UpdateMealBoxScreen> {
         thumbVisibility: true,
         child: ListView(
           children: availableItems.map((item) {
-            bool checked = selectedItems.any((e) => e['_id'] == item['_id']);
+            bool checked = selectedItems.any(
+              (e) => e['id'].toString() == item['id'].toString(),
+            );
             return CheckboxListTile(
-              title: Text(item['name']),
-              subtitle: Text(item['description']),
+              title: Text(item['name'].toString()),
+              subtitle: Text(item['description'].toString()),
               value: checked,
               onChanged: (value) => _onItemCheckChanged(value, item),
               controlAffinity: ListTileControlAffinity.leading,

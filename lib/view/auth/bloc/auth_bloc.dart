@@ -18,15 +18,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    final url = Uri.parse(
-      'https://mm-food-backend.onrender.com/api/vendors/login',
-    );
+    final url = Uri.parse('https://munchmartfoods.com/vendor/login.php');
 
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': event.email, 'password': event.password}),
+        // headers: {'Content-Type': 'application/json'},
+        body: {'login': event.email, 'password': event.password},
       );
       log("${response.statusCode}");
 
@@ -60,25 +58,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     SignupRequested event,
     Emitter<AuthState> emit,
   ) async {
-    log("message");
     emit(AuthLoading());
-    final url = Uri.parse(
-      'https://mm-food-backend.onrender.com/api/vendors/signup',
-    );
+    final url = Uri.parse('https://munchmartfoods.com/vendor/register.php');
 
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+        // headers: {'Content-Type': 'application/json'},
+        body: {
           'name': event.fullName,
           'email': event.email,
           'mobile': event.mobile,
           'password': event.password,
-        }),
+        },
       );
 
-      if (response.statusCode == 201) {
+      log("reach here ${response.statusCode}");
+      if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         emit(AuthSuccess(json['message'] ?? 'Signup successful'));
       } else {

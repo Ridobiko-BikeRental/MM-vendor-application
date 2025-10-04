@@ -15,11 +15,11 @@ class Item {
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
-      id: json['_id'],
+      id: json['id'].toString(), // Use 'id' instead of '_id'
       name: json['name'],
       description: json['description'],
-      imageUrl: json['imageUrl'],
-      cost: json['cost'].toString(), // convert whatever to string safely
+      imageUrl: json['image_url'] ?? "", // Use 'image_url' instead of 'image'
+      cost: json['cost'].toString(), // Convert cost to string safely
     );
   }
 
@@ -27,7 +27,7 @@ class Item {
     '_id': id,
     'name': name,
     'description': description,
-    'imageUrl': imageUrl,
+    'image': imageUrl,
     'cost': cost,
   };
 }

@@ -68,8 +68,8 @@ class ProductModel {
       "maxDeliveryDays": maxDeliveryDays,
       "minDeliveryDays": minDeliveryDays,
       "imageUrl": imageUrl,
-      "categoryId": category,
-      "minQty": minQty,
+      "category_id": category,
+      "quantity": minQty,
     };
   }
 
@@ -79,14 +79,14 @@ class ProductModel {
       name: json["name"] ?? "",
       shortDescription: json["description"] ?? "",
       pricePerUnit: json["pricePerUnit"]?.toString() ?? "",
-      priceType: json["priceType"]?? "",
-      deliveryPrice: json["deliveryPrice"]?? "",
-      maxDeliveryDays: json["maxDeliveryDays"]?? "",
-      deliveryPriceEnabled: json["deliveryPriceEnabled"]?? "",
-      minDeliveryDays: json["minDeliveryDays"]?? "",
+      priceType: json["priceType"] ?? "",
+      deliveryPrice: json["deliveryPrice"] ?? "",
+      maxDeliveryDays: json["maxDeliveryDays"] ?? "",
+      deliveryPriceEnabled: json["deliveryPriceEnabled"] ?? "",
+      minDeliveryDays: json["minDeliveryDays"] ?? "",
       imageUrl: json["image"] ?? "",
-      category: json["categoryId"] ?? "",
-      minQty: json["minQty"]?.toString() ?? "",
+      category: json["category_id"] ?? "",
+      minQty: json["quantity"]?.toString() ?? "",
     );
   }
 }

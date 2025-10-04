@@ -20,9 +20,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     Emitter<DashboardState> emit,
   ) async {
     emit(DashboardLoading());
-    final url = Uri.parse(
-      'https://mm-food-backend.onrender.com/api/categories/my-categories-with-subcategories',
-    );
+    final url = Uri.parse('https://munchmartfoods.com/vendor/subcategory.php');
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken') ?? '';
@@ -32,6 +30,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         headers: {"Authorization": "Bearer $token"},
       );
       log("asdfghjkl${response.statusCode.toString()}");
+      log("response${response.body.toString()}");
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final categoriesJson = data['categories'] as List<dynamic>? ?? [];

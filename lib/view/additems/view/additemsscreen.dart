@@ -33,7 +33,7 @@ class _AddItemsScreenState extends State<AddItemsScreen> {
       editingItemId = widget.editItem!.id;
       _nameCtrl.text = widget.editItem!.name;
       _descCtrl.text = widget.editItem!.description;
-      _costCtrl.text = widget.editItem!.cost;
+      _costCtrl.text = widget.editItem!.cost.toString() ;
       imageUrl = widget.editItem!.imageUrl;
     }
     context.read<AddItemsBloc>().add(LoadItemsRequested());
@@ -163,7 +163,7 @@ class _AddItemsScreenState extends State<AddItemsScreen> {
       editingItemId = item.id;
       _nameCtrl.text = item.name;
       _descCtrl.text = item.description;
-      _costCtrl.text = item.cost;
+      _costCtrl.text = item.cost.toString();
       _pickedImage = null; // The user can pick a new image if desired
       imageUrl = item.imageUrl;
     });

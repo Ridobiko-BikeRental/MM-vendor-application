@@ -21,15 +21,28 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      name: json['name']?.replaceAll('"', '') ?? "",
+      name: json['name'] ?? "",
+      vendId: json['id']?.toString() ?? "",
       email: json['email'] ?? "",
-      vendId: json['id'] ?? "",
-      mobile: json['mobile']?.replaceAll('"', '') ?? "",
-      image: json['image'] ?? "",
-      city: json['city']?.replaceAll('"', '') ?? "",
-      state: json['state']?.replaceAll('"', '') ?? "",
-      address: json['address']?.replaceAll('"', '') ?? "",
+      mobile: json['mobile'] ?? "",
+      image: json['profile_image'] ?? "", // Fix key here (no trailing space)
+      city: json['city'] ?? "",
+      state: json['state'] ?? "",
+      address: json['address'] ?? "",
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "name": name,
+      "id": vendId,
+      "email": email,
+      "mobile": mobile,
+      "profile_image": image, // Fix here as well for consistency
+      "city": city,
+      "state": state,
+      "address": address,
+    };
   }
 
   UserModel copyWith({
@@ -43,7 +56,7 @@ class UserModel {
     String? address,
   }) {
     return UserModel(
-      vendId: vendId??this.vendId,
+      vendId: vendId ?? this.vendId,
       name: name ?? this.name,
       email: email ?? this.email,
       mobile: mobile ?? this.mobile,
@@ -52,18 +65,5 @@ class UserModel {
       state: state ?? this.state,
       address: address ?? this.address,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      "name": name,
-      "id": vendId,
-      "email": email,
-      "mobile": mobile,
-      "image": image,
-      "city": city,
-      "state": state,
-      "address": address,
-    };
   }
 }

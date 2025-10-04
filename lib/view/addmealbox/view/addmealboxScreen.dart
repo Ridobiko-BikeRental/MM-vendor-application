@@ -47,7 +47,7 @@ class _AddMealBoxScreenState extends State<AddMealBoxScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString("authToken");
       final response = await http.get(
-        Uri.parse("https://mm-food-backend.onrender.com/api/item"),
+        Uri.parse("https://munchmartfoods.com/vendor/item.php"),
         headers: {
           "Authorization": "Bearer $token",
           "Accept": "application/json",
@@ -58,7 +58,7 @@ class _AddMealBoxScreenState extends State<AddMealBoxScreen> {
         final rawItems = body['items'] as List? ?? [];
         final items = rawItems.map<Map<String, dynamic>>((item) {
           return {
-            '_id': item['_id'] ?? '',
+            'id': item['id'] ?? '',
             'name': item['name'] ?? '',
             'description': item['description'] ?? '',
             'cost': item['cost'] ?? '',
@@ -86,11 +86,11 @@ class _AddMealBoxScreenState extends State<AddMealBoxScreen> {
   void _onItemCheckChanged(bool? checked, Map<String, dynamic> item) {
     setState(() {
       if (checked == true) {
-        if (!selectedItems.any((i) => i['_id'] == item['_id'])) {
+        if (!selectedItems.any((i) => i['id'] == item['id'])) {
           selectedItems.add(item);
         }
       } else {
-        selectedItems.removeWhere((i) => i['_id'] == item['_id']);
+        selectedItems.removeWhere((i) => i['id'] == item['id']);
       }
     });
     context.read<MealBoxBloc>().add(ItemsChanged(jsonEncode(selectedItems)));
@@ -145,7 +145,7 @@ class _AddMealBoxScreenState extends State<AddMealBoxScreen> {
             child: ListView(
               children: filteredItems.map((item) {
                 final isChecked = selectedItems.any(
-                  (i) => i['_id'] == item['_id'],
+                  (i) => i['id'] == item['id'],
                 );
                 return CheckboxListTile(
                   title: Text(item['name'] ?? ''),

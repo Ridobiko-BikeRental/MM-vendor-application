@@ -88,17 +88,34 @@ class _AddedItemScreenState extends State<AddedItemScreen> {
                               children: [
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
-                                  child: Image.network(
-                                    item.imageUrl,
-                                    width: 60,
-                                    height: 60,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, _, __) =>
-                                        const Icon(
-                                          Icons.image_not_supported,
-                                          size: 40,
+                                  child: item.imageUrl.isNotEmpty
+                                      ? Image.network(
+                                          item.imageUrl,
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return Container(
+                                                  width: 80,
+                                                  height: 80,
+                                                  color: Colors.grey[300],
+                                                  child: Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.grey[700],
+                                                  ),
+                                                );
+                                              },
+                                        )
+                                      : Container(
+                                          width: 80,
+                                          height: 80,
+                                          color: Colors.grey[300],
+                                          child: Icon(
+                                            Icons.image_not_supported,
+                                            color: Colors.grey[700],
+                                          ),
                                         ),
-                                  ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
@@ -126,7 +143,7 @@ class _AddedItemScreenState extends State<AddedItemScreen> {
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        "₹${item.cost.trim()}",
+                                        "₹${item.cost.toString()}",
                                         style: TextStyle(
                                           color: Colors.green[700],
                                           fontSize: 15,
